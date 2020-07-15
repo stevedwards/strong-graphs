@@ -1,74 +1,84 @@
-# Project imports
-from strong_graphs.data_structures.networks import Network, to_networkx
-from strong_graphs.data_structures.trees import DoublyLinkedTree
-from strong_graphs.draw import draw_graph
 
-# Other
-from math import ceil, floor
 import random
 import numpy.random as numpy_random
-from collections import defaultdict
 import itertools
 import networkx as nx
 import math
+from collections import defaultdict
+from math import ceil, floor
+from strong_graphs.data_structures.networks import SimpleNetwork, Network, to_networkx
+from strong_graphs.data_structures.trees import DoublyLinkedTree
+from strong_graphs.draw import draw_graph
 
 
 def random_choice(my_set):
+    """Randomly chooses a single element from a set. Probably a better way to do this."""
+    assert my_set is not None, "My set is empty"
+    print(my_set)
     return random.sample(my_set, 1)[0]
 
 
 def create_optimal_tree(n, m):
-    tree = DoublyLinkedTree([0])
-    # Sample the minimum required loop arcs if necessary
-    x = max(0, 2 * n - 1 - m)
-    U = set(random.sample(range(n-1), x))
-    V = set(range(1, n))-set([u+1 for u in U])
+    """Creating the optimal shortest path tree from node 0 to all remaining arcs for a given number
+    of nodes (n) and arcs (m).
+
+    At first it may seem superfluous that the optimal tree requires 'm' as an input, as a tree is 
+    known to have exactly n-1 arcs. However given that the final graph must also contain a loop containing all of
+    the nodes, for small values of m, some care must be taken when building the optimal tree to ensure that
+    there are sufficient arcs remaining to build a loop.
+
+    To address this, we first calculate the minimum number of arcs of the optimal tree that are also arcs in 
+    the loop, (not including arc (n-1)->(0)). We will refer to these arcs as 'loop arcs'. We sample the
+    required number of loop arcs by selecting predecessors from the range 0..(n-2). Note that the loop arcs are
+    not yet added to the tree.
+
+    To build the tree we use the following properties. For any tree with at least two nodes,
+    - the root node has at least one child
+    - all other nodes have exactly one parent. 
+    """
+    assert m > n-1, "Number of arcs must be able to form a tree"
+
+    # Sample the minimum required loop arcs
+    nb_loop_arcs = max(0, 2 * n - 1 - m)
+    loop_arc_predecessors = set(random.sample(range(n - 1), nb_loop_arcs))
 
     def dive(u):
-        while u in U:
-            tree.add(u, u+1)
+        """Add loop arcs to tree where possible"""
+        while u in loop_arc_predecessors:
+            tree.add_arc(u, u + 1)
             u += 1
-    # Source node must have at least one successors
-    if 0 not in U:
-        v = random_choice(V)
-        V.remove(v)
-        tree.add(0, v)
+
+    tree = Network([0])   
+    for i in range(n):
+        tree.add_node(i)
+    # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
+    # loop arcs as they will be added by diving when the predecessor is added.
+    parentless = set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
+    # Source node must have at least one child, choose from parentless nodes
+    if 0 not in loop_arc_predecessors:
+        v = random_choice(parentless)
+        parentless.remove(v)
+        tree.add_arc(0, v)
         dive(v)
     else:
         dive(0)
-    # Remaining nodes must have exactly one predecessor
-    V = list(V)
-    random.shuffle(V)
-    for v in V:
-        nodes = tree.nodes()
-        u = random_choice(nodes)
-        tree.add(u, v)
+    # Remaining nodes must have exactly one parent, choose from nodes in tree.
+    parentless = list(parentless)
+    random.shuffle(parentless)
+    for v in parentless:
+        tree_nodes = list(tree.nodes())
+        u = random_choice(tree_nodes)
+        tree.add_arc(u, v)
         dive(v)
     return tree
 
-
-def generate_shortest_path_tree_arcs(n, m):
-    # Sample the minimum required loop arcs if necessary
-    x = max(0, 2 * n - 1 - m)
-    tree_loop_predecessors = set(random.sample(range(n - 1), x))
-    for u in tree_loop_predecessors:
-        yield (u, u + 1)
-    # Sample the remaining arcs
-    in_tree = set([v + 1 for v in tree_loop_predecessors])
-    incomplete = set(range(n - 1)) - tree_loop_predecessors
-    for _ in range(n - 1 - x):
-        u = random_choice(in_tree)
-        v = incomplete.pop()
-        in_tree.add(v)
-        yield (u, v)
-
-
-def determine_shortest_path_distances(network):
+def determine_shortest_path_distances(tree):
+    """Optimal path found using breadth first search on tree O(n + m), i.e., fast."""
     distances = defaultdict(int)
     queue = set([0])
     while queue:
         u = queue.pop()
-        for v, w in network.successors(u, with_weight=True):
+        for v, w in tree.successors(u, with_weight=True):
             distances[v] = distances[u] + w
             queue.add(v)
     return distances
@@ -90,6 +100,8 @@ def non_loop_tree_arc(graph, n, v):
 
 
 def distribute_remaining_arcs_randomly(current_quantity, remaining_quantity, max):
+    """A method to distribute the remaining arcs across the nodes. It is intended to have
+    an alternative ways to distribute the arcs."""
     allocation = defaultdict(int)
     for _ in range(remaining_quantity):
         select_node = random_choice(current_quantity.keys())
@@ -101,9 +113,8 @@ def distribute_remaining_arcs_randomly(current_quantity, remaining_quantity, max
 
 
 def gen_remaining_arcs(graph, n, m, allocation_method):
-    """When a graph only consists of a cycle and the optimal shortest path tree, a useful feature is that
-    all nodes have at least 1 and at most 2 predecessors."""
-
+    """The remaining arcs consist of the arcs in the graph that are not on the main loop or in the
+    optimal shortest path tree"""
     remaining_arcs = m - graph.number_of_arcs()
     # Can do this evenly or randomly
     allocated = allocation_method(
@@ -135,7 +146,7 @@ def build_instance(
     arc_distribution,
     ensure_non_negative,
 ):
-    random
+    """This can be considered the body of the graph generation algorithm."""
     nodes = range(n)
     network = Network()
     # Add nodes
@@ -143,12 +154,11 @@ def build_instance(
         network.add_node(i)
     # Add shortest path tree arcs
     solution_tree = create_optimal_tree(n, m)
-    for v in range(1, n):
-        u = solution_tree._parent[v]
+    for u, v, _ in solution_tree.arcs():
         w = tree_weight_distribution()
         network.add_arc(u, v, w)
     # Determine shortest path distances
-    distances = determine_shortest_path_distances(network)
+    distances = determine_shortest_path_distances(solution_tree)
     # Add the remaining arcs ensuring the cycle is built
     for (u, v) in itertools.chain(
         gen_loop_arcs(network, n), gen_remaining_arcs(network, n, m, arc_distribution)
@@ -162,7 +172,7 @@ def build_instance(
 
 
 if __name__ == "__main__":
-    #random.seed(1)
+    # random.seed(1)
     n = 24
     d = 0.2
     m = n + floor(d * n * (n - 2))
