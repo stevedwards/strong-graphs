@@ -1,10 +1,10 @@
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 import networkx as nx
-from strong_graphs.data_structures.networks import to_networkx
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from strong_graphs.network import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
 
 

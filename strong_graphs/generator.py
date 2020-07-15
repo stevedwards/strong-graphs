@@ -6,8 +6,7 @@ import networkx as nx
 import math
 from collections import defaultdict
 from math import ceil, floor
-from strong_graphs.data_structures.networks import SimpleNetwork, Network, to_networkx
-from strong_graphs.data_structures.trees import DoublyLinkedTree
+from strong_graphs.network import Network, to_networkx
 from strong_graphs.draw import draw_graph
 
 
