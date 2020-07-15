@@ -2,11 +2,15 @@ import random
 import math
 from strong_graphs.generate import distribute_remaining_arcs_randomly, build_instance
 from strong_graphs.draw import draw_graph
+import click
 
-if __name__ == "__main__":
-    #random.seed(1)
-    n = 24
-    d = 0.2
+
+@click.command()
+@click.argument("n", type=int)
+@click.argument("d", type=float)
+def generate(n, d):
+    # Infer from density
+    #if m is None:
     m = n + math.floor(d * n * (n - 2))
     print(f"{n=}, {d=}, {m=}")
     D1 = lambda: random.randint(-100, 0)
@@ -22,3 +26,15 @@ if __name__ == "__main__":
     )
 
     draw_graph(instance, tree, distances)
+# @click.option(
+#     "--d", default=1, type=float, help="Density of graph - 0: cycle, 1:complete"
+# )
+# @click.option("--m", default=None, type=int, help="Option to select specific number of arcs, this overides the density value")
+# @click.option(
+#     "--D1",
+#     default="randint",
+#     type=click.Choice(["randint", "normal"]),
+#     help="Distribution from which arcs weights for optimal path arcs are sampled",
+# )
+
+generate()

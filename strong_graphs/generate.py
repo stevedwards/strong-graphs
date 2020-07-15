@@ -74,7 +74,7 @@ def determine_shortest_path_distances(network):
     return distances
 
 
-def gen_loop_arcs(graph):
+def gen_loop_arcs(graph, n):
     for u in range(graph.number_of_nodes()):
         v = (u + 1) % n
         if (u, v) not in graph._arcs.keys():
@@ -100,7 +100,7 @@ def distribute_remaining_arcs_randomly(current_quantity, remaining_quantity, max
     return allocation
 
 
-def gen_remaining_arcs(graph, m, allocation_method):
+def gen_remaining_arcs(graph, n, m, allocation_method):
     """When a graph only consists of a cycle and the optimal shortest path tree, a useful feature is that
     all nodes have at least 1 and at most 2 predecessors."""
 
@@ -151,7 +151,7 @@ def build_instance(
     distances = determine_shortest_path_distances(network)
     # Add the remaining arcs ensuring the cycle is built
     for (u, v) in itertools.chain(
-        gen_loop_arcs(network), gen_remaining_arcs(network, m, arc_distribution)
+        gen_loop_arcs(network, n), gen_remaining_arcs(network, n, m, arc_distribution)
     ):
         min_distance = distances[v] - distances[u]
         if ensure_non_negative:

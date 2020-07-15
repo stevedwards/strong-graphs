@@ -3,13 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import seaborn as sns
 import math
-from generator.data_structures.networks import to_networkx
+from strong_graphs.data_structures.networks import to_networkx
 import networkx as nx
 
-
+# sorry simon
 pi = 0.2
 bendy_arcs = f"arc3, rad={pi}"
-
 
 def circle_layout(graph):
     n = graph.number_of_nodes()
