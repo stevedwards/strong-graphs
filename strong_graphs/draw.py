@@ -22,7 +22,7 @@ def circle_layout(graph):
     return {i: (-math.cos(i * frac), -math.sin(i * frac)) for i in graph.nodes()}
 
 
-def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap = mpl.cm.plasma):
+def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap=mpl.cm.plasma):
     """Draws the graphs where arc weights are indicated using a heatmap"""
     weights = [w for _, _, w in nx_graph.edges.data("weight", default=None)]
     max_edge_abs = max(max(weights), -min(weights))
@@ -46,7 +46,9 @@ def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap = mpl.cm.p
     )
 
 
-def draw_solution_graph(nx_graph, nx_tree, layout, ax, fig, curviture=0.1):
+def draw_solution_tree_graph(
+    nx_graph, nx_tree, layout, ax, fig, curviture=0.1, cmap=mpl.cm.Oranges
+):
     """Draws a shortest path tree over the top of the graph. The arcs in the tree
     are highlighted in red."""
     nx.draw_networkx(
@@ -58,10 +60,14 @@ def draw_solution_graph(nx_graph, nx_tree, layout, ax, fig, curviture=0.1):
         connectionstyle=curved_arcs(curviture),
     )
     nx.draw_networkx_edges(
-        nx_tree, pos=layout, ax=ax, connectionstyle=curved_arcs(curviture), edge_color="xkcd:red"
+        nx_tree,
+        pos=layout,
+        ax=ax,
+        connectionstyle=curved_arcs(curviture),
+        edge_color="xkcd:red",
     )
     fig.colorbar(
-        mpl.cm.ScalarMappable(cmap=mpl.cm.Oranges),
+        mpl.cm.ScalarMappable(cmap=cmap),
         ax=ax,
         orientation="horizontal",
         shrink=0.25,
@@ -69,12 +75,12 @@ def draw_solution_graph(nx_graph, nx_tree, layout, ax, fig, curviture=0.1):
     )
 
 
-def draw_arc_sign_graph(nx_graph, layout, ax, fig, curviture=0.1):
+def draw_arc_sign_graph(
+    nx_graph, layout, ax, fig, curviture=0.1, cmap=ListedColormap(Tropic_2.mpl_colors)
+):
     """Draws the graphs where the sign, i.e. negative (<) or non-negative (≥), is indicated by
     different colours."""
-    cmap = ListedColormap(Tropic_2.mpl_colors)
-    neg_colour = cmap(0)
-    non_neg_colour = cmap(1)
+    neg_colour, non_neg_colour = cmap(0), cmap(1)
     edge_colours = [
         neg_colour if w >= 0 else non_neg_colour
         for _, _, w in nx_graph.edges.data("weight", default=None)
@@ -93,7 +99,7 @@ def draw_arc_sign_graph(nx_graph, layout, ax, fig, curviture=0.1):
         ax=ax,
         orientation="horizontal",
         shrink=0.25,
-        label="Negative vs Non-negative Arc weights",
+        label="Non-Negative vs Negative Arc weights",
     )
     plt.show()
 
@@ -105,6 +111,6 @@ def draw_graph(graph, tree, distances):
     nx_tree = to_networkx(tree)
     layout = circle_layout(graph)
     draw_heatmap_graph(nx_graph, layout, ax0, fig)
-    draw_solution_graph(nx_graph, nx_tree, layout, ax1, fig)
+    draw_solution_tree_graph(nx_graph, nx_tree, layout, ax1, fig)
     draw_arc_sign_graph(nx_graph, layout, ax2, fig)
     plt.show()

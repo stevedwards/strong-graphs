@@ -20,7 +20,7 @@ class Network:
     def add_arc(self, u, v, w=0):
         assert u in self._nodes, f"{u} not a node"
         assert v in self._nodes, f"{v} not a node"
-        assert u != v, f"node self loops {u} = {v}"
+        assert u != v, f"no self loops {u} = {v}"
         assert (u, v) not in self._arcs.keys()
         self._arcs[(u, v)] = w
         self._predecessors[v].add((u, w))

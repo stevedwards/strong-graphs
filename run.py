@@ -8,12 +8,13 @@ import click
 @click.command()
 @click.argument("n", type=int)
 @click.argument("d", type=float)
+
 def generate(n, d):
+    random.seed(3)
     # Infer from density
-    #if m is None:
     m = n + math.floor(d * n * (n - 2))
     print(f"{n=}, {d=}, {m=}")
-    D1 = lambda: random.randint(-100, 0)
+    D1 = lambda: random.randint(-100, -100)
     D2 = lambda: random.randint(0, 10)  # Must be non-negative
     D3 = distribute_remaining_arcs_randomly
     instance, tree, distances = build_instance(
