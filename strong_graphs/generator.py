@@ -167,7 +167,7 @@ def build_instance(
         w = tree_weight_distribution()
         network.add_arc(u, v, w)
     # Determine shortest path distances
-    distances = determine_shortest_path_distances(solution_tree)
+    distances = determine_shortest_path_distances(network)
     # Add the remaining arcs, first ensuring the cycle is built
     for (u, v) in itertools.chain(
         gen_remaining_loop_arcs(network), gen_remaining_arcs(network, n, m, arc_distribution)
