@@ -12,6 +12,9 @@ class Network:
         self._predecessors = defaultdict(set)
         self._successors = defaultdict(set)
 
+    def __eq__(self, other):
+        return self._nodes == other._nodes and self._arcs == other._arcs
+
     def add_node(self, node_id):
         assert node_id not in self._nodes, f"{node_id} already a node"
         self._nodes.add(node_id)

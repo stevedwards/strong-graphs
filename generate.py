@@ -1,9 +1,12 @@
 import random
 import math
+from functools import partial
+
+import click
+
 from strong_graphs.generator import distribute_remaining_arcs_randomly, build_instance
 from strong_graphs.draw import draw_graph
 from strong_graphs.output import output
-import click
 
 
 # Command line information
@@ -19,7 +22,6 @@ import click
 def generate(n, d, s, m, x1, x2, ensure_non_neg):
     assert 0 <= d <= 1, f"Density {d} must be between 0 and 1"
     assert x2[0] >= 0, f"Remaining arc distribution must be non-negative, given {x2=}"
-    random.seed(s)
     if m is None:
         m = n + math.floor(d * n * (n - 2))
     else:
@@ -34,19 +36,19 @@ def generate(n, d, s, m, x1, x2, ensure_non_neg):
     - Random seed, {s=}
     - Ensuring other arcs are non-neg, {ensure_non_neg=}
     """)
-    D1 = lambda: random.randint(x1[0], x1[1])
-    D2 = lambda: random.randint(x2[0], x2[1]) 
-    D3 = distribute_remaining_arcs_randomly
+    random_state = random.Random(s)
     network, tree, distances = build_instance(
+        random_state,
         n,
         m,
-        tree_weight_distribution=D1,
-        non_tree_weight_distribution=D2,
-        arc_distribution=D3,
+        tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x1[1]),
+        non_tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x2[1]),
+        arc_distribution=distribute_remaining_arcs_randomly,
         ensure_non_negative=ensure_non_neg,
     )
     #draw_graph(network, tree, distances)
     sum_of_distances = sum(distances.values())
     output(network, sum_of_distances)
 
-generate()
+
+generate()  # pylint: disable=no-value-for-parameter
