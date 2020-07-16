@@ -2,6 +2,7 @@ import random
 import math
 from strong_graphs.generator import distribute_remaining_arcs_randomly, build_instance
 from strong_graphs.draw import draw_graph
+from strong_graphs.output import output
 import click
 
 
@@ -36,7 +37,7 @@ def generate(n, d, s, m, x1, x2, ensure_non_neg):
     D1 = lambda: random.randint(x1[0], x1[1])
     D2 = lambda: random.randint(x2[0], x2[1]) 
     D3 = distribute_remaining_arcs_randomly
-    instance, tree, distances = build_instance(
+    network, tree, distances = build_instance(
         n,
         m,
         tree_weight_distribution=D1,
@@ -44,6 +45,8 @@ def generate(n, d, s, m, x1, x2, ensure_non_neg):
         arc_distribution=D3,
         ensure_non_negative=ensure_non_neg,
     )
-    draw_graph(instance, tree, distances)
+    #draw_graph(network, tree, distances)
+    sum_of_distances = sum(distances.values())
+    output(network, sum_of_distances)
 
 generate()
