@@ -65,7 +65,7 @@ def determine_shortest_path_distances(tree):
     queue = set([0])
     while queue:
         u = queue.pop()
-        for v, w in tree.successors(u, with_weight=True):
+        for v, w in tree.successors(u):
             distances[v] = distances[u] + w
             queue.add(v)
     return distances
@@ -121,7 +121,7 @@ def gen_remaining_arcs(
     def non_loop_tree_arc(v):
         """Finds the predecessor is isn't the loop arc if one exists. Note that here there
         is at most two predecessors so this should be quick."""
-        for u in graph.predecessors(v):
+        for u, _ in graph.predecessors(v):
             if u != (v - 1) % n:
                 return (u, v)
         return None
