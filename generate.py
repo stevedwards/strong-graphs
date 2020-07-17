@@ -1,9 +1,7 @@
 import random
 import math
 from functools import partial
-
 import click
-
 from strong_graphs.generator import distribute_remaining_arcs_randomly, build_instance
 from strong_graphs.draw import draw_graph
 from strong_graphs.output import output
@@ -46,7 +44,7 @@ def generate(n, d, s, m, x1, x2, ensure_non_neg):
         arc_distribution=distribute_remaining_arcs_randomly,
         ensure_non_negative=ensure_non_neg,
     )
-    #draw_graph(network, tree, distances)
+    draw_graph(network, tree, distances)
     sum_of_distances = sum(distances.values())
     output(network, sum_of_distances)
 

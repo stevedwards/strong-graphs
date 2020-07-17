@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-from strong_graphs.network import to_networkx
+from .network import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
 
 

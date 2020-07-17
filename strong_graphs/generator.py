@@ -1,6 +1,5 @@
 import itertools
 from collections import defaultdict
-
 from .network import Network
 
 

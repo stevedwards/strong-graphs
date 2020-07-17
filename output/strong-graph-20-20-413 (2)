@@ -1,0 +1,29 @@
+c Strong graph for shortest paths problem
+c extended DIMACS format
+c
+t strong-graph-20-20-413
+c
+p sp         20         20
+c
+n          1
+c
+a          1          2        -75
+a          2          3         86
+a          3          4        -82
+a          4          5         75
+a          5          6        -16
+a          6          7         20
+a          7          8         43
+a          8          9        -75
+a          9         10        -10
+a         10         11         11
+a         11         12        -20
+a         12         13         56
+a         13         14         63
+a         14         15        -48
+a         15         16         41
+a         16         17         22
+a         17         18         13
+a         18         19         33
+a         19         20        -34
+a         20          1        -96
