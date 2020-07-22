@@ -2,7 +2,7 @@ import random
 import math
 from functools import partial
 import click
-from strong_graphs.generator import distribute_remaining_arcs_randomly, build_instance
+from strong_graphs.generator import distribute, build_instance
 from strong_graphs.draw import draw_graph
 from strong_graphs.output import output
 
@@ -45,12 +45,11 @@ def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
         r,
         tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x1[1]),
         non_tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x2[1]),
-        arc_distribution=distribute_remaining_arcs_randomly,
+        arc_distribution=distribute,
         ensure_non_negative=ensure_non_neg,
     )
     draw_graph(network, tree, distances)
     sum_of_distances = sum(distances.values())
     #output(network, sum_of_distances)
-
 
 generate()  # pylint: disable=no-value-for-parameter

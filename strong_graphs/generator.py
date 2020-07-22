@@ -3,7 +3,7 @@ import math
 from collections import defaultdict
 from strong_graphs.network import Network
 from strong_graphs.network import negative_predecessors
-from remaining_arcs import gen_remaining_arcs
+from strong_graphs.remaining_arcs import gen_remaining_arcs, distribute
 
 def create_optimal_tree(random_state, n, m):
     """Creating the optimal shortest path tree from node 0 to all remaining arcs for a given number
@@ -81,10 +81,6 @@ def gen_remaining_loop_arcs(graph):
         if (u, v) not in graph._arcs.keys():
             yield (u, v)
 
-
-
-
-
 def build_instance(
     random_state,
     n,
@@ -123,17 +119,19 @@ def build_instance(
 if __name__ == "__main__":
     import random
     from functools import partial
+    from draw import draw_graph
 
     random_state = random.Random(0)
-    build_instance(
-    random_state,
-    n=10,
-    m=50,
-    r=1,
-    tree_weight_distribution=partial(random.Random.randint, a=-100, b=100),
-    non_tree_weight_distribution=partial(random.Random.randint, a=0, b=100),
-    arc_distribution=distribute,
-    ensure_non_negative=False,
-)
+    network, tree, distances = build_instance(
+        random_state,
+        n=20,
+        m=380,
+        r=1,
+        tree_weight_distribution=partial(random.Random.randint, a=-100, b=-1),
+        non_tree_weight_distribution=partial(random.Random.randint, a=0, b=100),
+        arc_distribution=distribute,
+        ensure_non_negative=False
+    )
+    draw_graph(network, tree, distances)
 
         

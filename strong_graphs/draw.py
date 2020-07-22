@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-from .network import to_networkx
+from strong_graphs.network import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
 
 
@@ -76,7 +76,7 @@ def draw_solution_tree_graph(
 
 
 def draw_arc_sign_graph(
-    nx_graph, layout, ax, fig, curviture=0.1, cmap=ListedColormap(Tropic_2.mpl_colors)
+    nx_graph, distances, layout, ax, fig, curviture=0.1, cmap=ListedColormap(Tropic_2.mpl_colors)
 ):
     """Draws the graphs where the sign, i.e. negative (<) or non-negative (≥), is indicated by
     different colours."""
@@ -88,7 +88,8 @@ def draw_arc_sign_graph(
     nx.draw_networkx(
         nx_graph,
         pos=layout,
-        with_labels=False,
+        labels = distances,
+        #with_labels=False,
         node_color="xkcd:dark sky blue",
         edge_color=edge_colours,
         style="dashdot",
@@ -112,5 +113,5 @@ def draw_graph(graph, tree, distances):
     layout = circle_layout(graph)
     draw_heatmap_graph(nx_graph, layout, ax0, fig)
     draw_solution_tree_graph(nx_graph, nx_tree, layout, ax1, fig)
-    draw_arc_sign_graph(nx_graph, layout, ax2, fig)
+    draw_arc_sign_graph(nx_graph, distances, layout, ax2, fig)
     plt.show()
