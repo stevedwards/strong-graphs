@@ -88,8 +88,8 @@ def draw_arc_sign_graph(
     nx.draw_networkx(
         nx_graph,
         pos=layout,
-        labels = distances,
-        #with_labels=False,
+        #labels = distances,
+        with_labels=True,
         node_color="xkcd:dark sky blue",
         edge_color=edge_colours,
         style="dashdot",

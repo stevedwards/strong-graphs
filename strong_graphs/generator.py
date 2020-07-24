@@ -4,6 +4,13 @@ from collections import defaultdict
 from strong_graphs.network import Network
 from strong_graphs.network import negative_predecessors
 from strong_graphs.remaining_arcs import gen_remaining_arcs, distribute
+from strong_graphs.loop_arcs import (
+    gen_remaining_loop_arcs,
+    create_mapping,
+    map_distances,
+    map_graph,
+)
+
 
 def create_optimal_tree(random_state, n, m):
     """Creating the optimal shortest path tree from node 0 to all remaining arcs for a given number
@@ -73,14 +80,6 @@ def determine_shortest_path_distances(tree):
     return distances
 
 
-def gen_remaining_loop_arcs(graph):
-    """Pretty self explanatory. Assumes the optimal tree arcs are already added but will
-    work correctly regardless."""
-    for u in range(n := graph.number_of_nodes()):
-        v = (u + 1) % n
-        if (u, v) not in graph._arcs.keys():
-            yield (u, v)
-
 def build_instance(
     random_state,
     n,
@@ -95,25 +94,31 @@ def build_instance(
     network = Network()
     for i in range(n):
         network.add_node(i)
-    solution_tree = create_optimal_tree(random_state, n, m)
-    for u, v, _ in solution_tree.arcs():
+    tree = create_optimal_tree(random_state, n, m)
+    for u, v, _ in tree.arcs():
         w = tree_weight_distribution(random_state)
         network.add_arc(u, v, w)
     distances = determine_shortest_path_distances(network)
-    # Add loop arcs - TODO rearrange order to ensure minimum arcs are made
-    for (u, v) in gen_remaining_loop_arcs(network):
-        min_distance = distances[v] - distances[u]
-        w = non_tree_weight_distribution(random_state) + min_distance
-        network.add_arc(u, v, w)
-    # Add remaining arcs explicitly controlling number of negative and positive arc weights
-    for (u, v, is_negative) in gen_remaining_arcs(random_state, network, distances, n, m, r):
+    arcs_remaining = max((m - 1) - (n - 1), 0)
+    nb_neg_arcs = math.floor(arcs_remaining * r)
+    nb_neg_loop_arcs = n-1 #random_state.randint(0, min(nb_neg_arcs, n - 1))
+    mapping = create_mapping(distances, nb_neg_loop_arcs)
+    network, tree = map_graph(network, mapping), map_graph(tree, mapping)
+    distances = map_distances(distances, mapping)
+    for (u, v, is_negative) in itertools.chain(
+        gen_remaining_loop_arcs(random_state, network, distances, nb_neg_loop_arcs),
+        gen_remaining_arcs(
+            random_state, network, distances, n, m, nb_neg_arcs - nb_neg_loop_arcs
+        ),
+    ):
         min_distance = distances[v] - distances[u]
         if is_negative:
-            w = -1
+            w = random_state.randint(min_distance, 0)
         else:
-            w = 1
+            w = non_tree_weight_distribution(random_state) + max(min_distance, 0)
+        assert (is_negative and w <= 0) or (not is_negative and w >= 0)
         network.add_arc(u, v, w)
-    return network, solution_tree, distances
+    return network, tree, distances
 
 
 if __name__ == "__main__":
@@ -121,17 +126,18 @@ if __name__ == "__main__":
     from functools import partial
     from draw import draw_graph
 
-    random_state = random.Random(0)
+    random_state = random.Random()
+    n= 20
+    d = 0.5
+    m = int(n*(n-1)/2) + 1 # n + math.floor(d * n * (n - 2))
     network, tree, distances = build_instance(
         random_state,
-        n=20,
-        m=380,
+        n=n,
+        m=m,
         r=1,
-        tree_weight_distribution=partial(random.Random.randint, a=-100, b=-1),
+        tree_weight_distribution=partial(random.Random.randint, a=-10000, b=-1),
         non_tree_weight_distribution=partial(random.Random.randint, a=0, b=100),
         arc_distribution=distribute,
-        ensure_non_negative=False
+        ensure_non_negative=False,
     )
     draw_graph(network, tree, distances)
-
-        

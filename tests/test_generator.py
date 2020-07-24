@@ -1,9 +1,7 @@
 import random
 from functools import partial
-
 import pytest
-
-from strong_graphs.generator import build_instance, distribute_remaining_arcs_randomly
+from strong_graphs.generator import build_instance, distribute
 
 
 @pytest.mark.parametrize(

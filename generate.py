@@ -10,12 +10,12 @@ from strong_graphs.output import output
 # Command line information
 @click.command()
 @click.argument("n", type=int)
-@click.option("-d", type=float, default=1, help="Density, d∈[0,...,1] (1)")
+@click.option("-d", type=float, default=0.5, help="Density, d∈[0,...,1] (1)")
 @click.option('-s', type=float, default=0, help="Random seed (0)")
 @click.option('-m', type=int, default=None, help="Number of arcs override (None)")
 @click.option('-x1', type=(float, float), default=(-100, 100), help="Optimal tree distribution bounds (-100, 100)")
 @click.option('-x2', type=(float, float), default=(0, 100), help="Remaining arc distribution bounds (0, 100)")
-@click.option('-r', type=float, default=0.5, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
+@click.option('-r', type=float, default=1, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
 @click.option('-ensure_non_neg', type=bool, default=False, help="Ensure remaining arc weights are non-negative (False)")
  
 def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
