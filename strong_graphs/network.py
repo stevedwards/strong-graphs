@@ -15,9 +15,9 @@ class Network:
 
     def __eq__(self, other):
         return (
-            self._arcs == other._arcs and
-            self._predecessors == other._predecessors and
-            self._successors == other._successors
+            self._arcs == other._arcs
+            and self._predecessors == other._predecessors
+            and self._successors == other._successors
         )
 
     def add_node(self, node_id):
@@ -65,12 +65,3 @@ def to_networkx(graph):
         n.add_edge(u, v, weight=w)
     return n
 
-
-def negative_predecessors(graph):
-    from collections import defaultdict
-
-    my_dict = defaultdict(set)
-    for u, v, w in graph.arcs():
-        if w < 0:
-            my_dict[v].add(u)
-    return my_dict

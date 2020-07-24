@@ -1,122 +1,88 @@
 import math
 from collections import defaultdict, OrderedDict
-from strong_graphs.utils import distribute
+from strong_graphs.utils import distribute, determine_order
 from typing import Dict, Hashable, List
 
-def determine_order(distances: Dict[Hashable, int]) -> List[Hashable]:
-    positions = OrderedDict(
-        [
-            (i, pos)
-            for pos, i in enumerate(
-                [x[0] for x in sorted(list(distances.items()), key=lambda x: x[1])]
-            )
-        ]
-    )
-    return [i for i in positions], positions
+
+__all__ = ["gen_remaining_arcs"]
 
 
-def left_arc_vacancies(graph, order, position_in_order):
-    return {
-        v: graph.number_of_nodes() - 1 - pos
-        - sum(
-            1
-            for u, _ in graph.predecessors(v)
-            if position_in_order[v] < position_in_order[u]
-        )
-        for pos, v in enumerate(order)
+def determine_predecessor_vacancies(graph, order):
+    """    
+    A vacancy represents the lack of an inward arc to a node
+    from a given predecessor.
+
+    <- right-to-left arrow from high distances to low distances
+    -> left-to-right arrow from low distances to high distances
+     """
+    n = graph.number_of_nodes()
+    pos = {v: pos for pos, v in enumerate(order)}
+    vacancies = {
+        "<-": {i: n - 1 - pos[i] for i in range(n)},
+        "->": {i: pos[i] for i in range(n)},
     }
+    for v in range(n):
+        for u, _ in graph.predecessors(v):
+            if pos[v] < pos[u]:
+                vacancies["<-"][v] -= 1
+            else:
+                vacancies["->"][v] -= 1
+    return vacancies
 
 
-def right_arc_vacancies(graph, order, position_in_order):
-    return {
-        v: pos
-        - sum(
-            1
-            for u, _ in graph.predecessors(v)
-            if position_in_order[v] > position_in_order[u]
-        )
-        for pos, v in enumerate(order)
+def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_neg, m_pos):
+    """
+    Negative arcs (really <=) must be allocated to <- vacancies 
+    Positive arcs (really >=) can be allocated to both <- and -> vacancies
+    """
+    allocation = {"<=": distribute(ξ, vacancies["<-"], m_neg)}
+    remaining_combined_vacancies = {
+        i: vacancies["->"] + vacancies["<-"][i] - allocation["<="]
+        for i in graph.nodes()
     }
-
-
-def determine_arc_vacancies(graph, order, position_in_order):
-    return {
-        "left": left_arc_vacancies(graph, order, position_in_order),
-        "right": right_arc_vacancies(graph, order, position_in_order),
-    }
-
-def determine_arcs_to_add(total, r, arc_vacancies):
-    arcs_to_add = {
-        "negative": min(math.floor(r * (total)), sum(arc_vacancies["left"].values()))
-    }
-    arcs_to_add["positive"] = total - arcs_to_add["negative"]
-    return arcs_to_add
-
-
-def allocate_predecessors_to_nodes(random_state, graph, arc_vacancies, arcs_to_add):
-    allocation = {
-        "negative": distribute(
-            random_state, arc_vacancies["left"], arcs_to_add["negative"]
-        )
-    }
-    allocation["positive"] = distribute(
-        random_state,
-        {
-            i: sum(arc_vacancies[d].get(i, 0) for d in ["left", "right"])
-            for i in graph.nodes()
-        },
-        arcs_to_add["positive"],
-    )
+    allocation[">="] = distribute(ξ, remaining_combined_vacancies, m_pos)
     return allocation
 
 
 def gen_remaining_arcs(
-    random_state, graph, distances, n, m, r,
+    ξ, graph, distances, n, m_pos, m_neg,
 ):
-    order, position_in_order = determine_order(distances)
-    arc_vacancies = determine_arc_vacancies(graph, order, position_in_order)
-    arcs_to_add = determine_arcs_to_add(m - graph.number_of_arcs(), r, arc_vacancies)
-    allocation = allocate_predecessors_to_nodes(
-        random_state, graph, arc_vacancies, arcs_to_add
-    )
+    order = determine_order(distances)
+    arc_vacancies = determine_predecessor_vacancies(graph, order)
+    allocation = allocate_predecessors_to_nodes(ξ, graph, arc_vacancies, m_pos, m_neg)
     # Generate predecessors
+    def generate_arcs(sample_range, q, threshold=0, shuffle=False):
+        """Can be used for both for both <- and -> arcs"""
+        samples = ξ.sample(sample_range, q+2)
+        if shuffle:
+            ξ.shuffle(samples)
+        count = 0
+        while count < q:
+            s = samples.pop()
+            u = order[s]
+            if (u, v) not in graph._arcs:
+                is_negative = count < threshold
+                count += 1
+                yield u, v, is_negative
+
     for pos, v in enumerate(order):
-        nb_neg = allocation["negative"].get(v, 0)
-        nb_pos = allocation["positive"].get(v, 0)
-        nb_pos_to_the_left = random_state.randint(
-            allocation["positive"][v]
-            - arc_vacancies["right"][
-                v
-            ],  # The minimum that ensures the right does not overflow
-            min(nb_pos, arc_vacancies["left"].get(v, 0)),  # The nb_neg has already been subtracted
-        ) if nb_pos > 0 else 0
-        nb_to_the_left = nb_neg + nb_pos_to_the_left
-        nb_to_the_right = nb_pos - nb_pos_to_the_left
-        # Generate to the left
+        nb_pos_to_the_left = ξ.randint(
+            a=allocation[">="][v] - arc_vacancies["->"][v],
+            b=min(m_pos, arc_vacancies["left"][v] - allocation["<="][v]),
+        )
+        nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
+        nb_to_the_right = allocation[">="][v] - nb_pos_to_the_left
+        # Generate to the left <-
         if nb_to_the_left > 0:
-            quantity_to_sample = min(n - 1 - pos, nb_to_the_left + 2)
-            sample_range = range(pos + 1, n)
-            samples = random_state.sample(
-                sample_range, quantity_to_sample
+            yield from generate_arcs(
+                sample_range=range(pos + 1, n),
+                q=nb_to_the_left,
+                threshold=allocation["<="][v],
+                shuffle=True,
             )
-            count = 0
-            random_state.shuffle(samples)  # NOTE: Required for completeness
-            for s in samples:
-                u = order[s]
-                if (u, v) not in graph._arcs:
-                    is_negative = count < nb_neg
-                    count += 1
-                    yield (u, v, is_negative)
-                if count == nb_to_the_left:
-                    break
-        # Generate to the left
+        # Generate to the right ->
         if nb_to_the_right > 0:
-            samples = random_state.sample(range(pos), min(pos, nb_to_the_right + 2))
-            count = 0
-            for s in samples:
-                u = order[s]
-                if (u, v) not in graph._arcs:
-                    count += 1
-                    yield u, v, False
-                if count == nb_to_the_right:
-                    break
+            yield from generate_arcs(
+                sample_range=range(pos),
+                q=nb_to_the_right              
+            )

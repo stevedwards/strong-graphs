@@ -1,7 +1,7 @@
 from strong_graphs.network import Network
 from collections import defaultdict
 
-def create_optimal_tree(random_state, n, m):
+def gen_tree_arcs(random_state, n, m):
     """Creating the optimal shortest path tree from node 0 to all remaining arcs for a given number
     of nodes (n) and arcs (m).
 
@@ -23,13 +23,13 @@ def create_optimal_tree(random_state, n, m):
     # Sample the minimum required loop arcs
     nb_loop_arcs = max(0, 2 * n - 1 - m)
     loop_arc_predecessors = set(random_state.sample(range(n - 1), nb_loop_arcs))
-    tree = Network(nodes=[0])
+    tree_nodes = set([0])
 
     def dive(u):
         """Add loop arcs to tree where possible"""
         while u in loop_arc_predecessors:
-            tree.add_node(u + 1)
-            tree.add_arc(u, u + 1)
+            tree_nodes.add(u + 1)
+            yield (u, u+1)
             u += 1
 
     # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
@@ -39,7 +39,7 @@ def create_optimal_tree(random_state, n, m):
     if 0 not in loop_arc_predecessors:
         v = random_state.choice(list(parentless))
         parentless.remove(v)
-        tree.add_node(v), tree.add_arc(0, v)
+        yield (0, v)
         dive(v)
     else:
         dive(0)
@@ -47,20 +47,10 @@ def create_optimal_tree(random_state, n, m):
     parentless = list(parentless)
     random_state.shuffle(parentless)
     for v in parentless:
-        tree_nodes = list(tree.nodes())
-        u = random_state.choice(tree_nodes)
-        tree.add_node(v), tree.add_arc(u, v)
+        tree_nodes_list = list(tree_nodes)
+        u = random_state.choice(tree_nodes_list)
+        tree_nodes.add(v)
+        yield u, v
         dive(v)
-    return tree
 
 
-def determine_shortest_path_distances(tree):
-    """Optimal path found using breadth first search on tree O(n + m), i.e., fast."""
-    distances = defaultdict(int)
-    queue = set([0])
-    while queue:
-        u = queue.pop()
-        for v, w in tree.successors(u):
-            distances[v] = distances[u] + w
-            queue.add(v)
-    return distances

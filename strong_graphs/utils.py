@@ -1,11 +1,17 @@
 import math
 from collections import defaultdict
-from typing import Hashable, Dict
+from typing import Hashable, Dict, List, Tuple
 
 
 def nb_arcs_from_density(n: int, d: int) -> int:
     """Determines how many arcs in a directed graph of n and density d"""
     return n + math.floor(d * n * (n - 2))
+
+
+def determine_order(distances: Dict[Tuple, int]) -> List[Hashable]:
+    """Sort tuple based on second value"""
+    return [x[0] for x in sorted(list(distances.items()), key=lambda x: x[1])]
+
 
 def distribute(
     random_state, capacity: Dict[Hashable, int], quantity: int
