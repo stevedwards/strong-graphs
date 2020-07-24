@@ -4,11 +4,14 @@ import networkx as nx
 class Network:
     """A network object that keeps track of both successors and predecessors"""
 
-    def __init__(self, id=None):
+    def __init__(self, id=None, nodes=None):
         self.id = id
         self._arcs = dict()
         self._predecessors = {}
         self._successors = {}
+        if nodes is not None:
+            for node in nodes:
+                self.add_node(node)
 
     def __eq__(self, other):
         return (
@@ -61,6 +64,7 @@ def to_networkx(graph):
     for (u, v, w) in graph.arcs():
         n.add_edge(u, v, weight=w)
     return n
+
 
 def negative_predecessors(graph):
     from collections import defaultdict

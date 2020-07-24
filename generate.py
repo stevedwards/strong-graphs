@@ -5,7 +5,7 @@ import click
 from strong_graphs.generator import distribute, build_instance
 from strong_graphs.draw import draw_graph
 from strong_graphs.output import output
-
+from strong_graphs.utils import nb_arcs_from_density
 
 # Command line information
 @click.command()
@@ -23,7 +23,7 @@ def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
     assert r is None or 0 <= r <= 1, f"Proportion of negative remaining arcs between 0 and 1, {r=}"
     assert x2[0] >= 0, f"Remaining arc distribution must be non-negative, given {x2=}"
     if m is None:
-        m = n + math.floor(d * n * (n - 2))
+        m = nb_arcs_from_density(n, d)
     else:
         print(f"Density value {d=} is being overriden by {m=}")
     #m_neg = min(r * (m-1), (n)*(n-1)/2)

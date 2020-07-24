@@ -1,24 +1,9 @@
 import math
 from collections import defaultdict, OrderedDict
+from strong_graphs.utils import distribute
+from typing import Dict, Hashable, List
 
-
-def distribute(random_state, capacity, remaining_quantity):
-    """A method to distribute the remaining arcs across the nodes. It is intended to have
-    an alternative ways to distribute the arcs."""
-    allocation = defaultdict(int)
-    for k, v in list(capacity.items()):
-        if v == 0:
-            capacity.pop(k)
-    for _ in range(remaining_quantity):
-        select_node = random_state.choice(list(capacity.keys()))
-        allocation[select_node] += 1
-        capacity[select_node] -= 1
-        if capacity[select_node] == 0:
-            capacity.pop(select_node)
-    return allocation
-
-
-def determine_order(distances):
+def determine_order(distances: Dict[Hashable, int]) -> List[Hashable]:
     positions = OrderedDict(
         [
             (i, pos)
@@ -60,7 +45,6 @@ def determine_arc_vacancies(graph, order, position_in_order):
         "right": right_arc_vacancies(graph, order, position_in_order),
     }
 
-
 def determine_arcs_to_add(total, r, arc_vacancies):
     arcs_to_add = {
         "negative": min(math.floor(r * (total)), sum(arc_vacancies["left"].values()))
@@ -89,23 +73,6 @@ def allocate_predecessors_to_nodes(random_state, graph, arc_vacancies, arcs_to_a
 def gen_remaining_arcs(
     random_state, graph, distances, n, m, r,
 ):
-    """With respect to the ordering, negative arcs can only be added from right to left otherwise will
-    definitely update the tree
-
-    position      0           1          2          3           4           5            6
-    node_id       5           1          4          0           6           2            3
-    distance     -20         -12        -8          0           3           3            10
-                                <---------(-12)------
-                                --------------------15---------------------->
-                                                                            -------7----->
-                                          <-------------------------(-18)------------------                                                             
-                 <-----------(-12)------------
-                 ------------------------23----------------------->
-
-    a negative arc must be left (←)
-    a positive arc can be left or right (← or →) 
-    a right arc must be positive
-    """
     order, position_in_order = determine_order(distances)
     arc_vacancies = determine_arc_vacancies(graph, order, position_in_order)
     arcs_to_add = determine_arcs_to_add(m - graph.number_of_arcs(), r, arc_vacancies)

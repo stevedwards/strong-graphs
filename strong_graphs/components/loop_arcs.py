@@ -1,4 +1,4 @@
-from strong_graphs.remaining_arcs import determine_order
+from strong_graphs.components.remaining_arcs import determine_order
 from strong_graphs.network import Network
 import copy
 import random
@@ -17,6 +17,14 @@ def correct_node_position(order, q):
     return order
 
 
+def remapping_required(order, nb_neg_loop_arcs):
+    n = len(order)
+    assert 0 <= nb_neg_loop_arcs < n, "Must have at least one non-negative-arc"
+    assert n == len(set(order)), "No duplicates allowed"
+    number_of_left_arcs = count_left_arcs(order)
+    return nb_neg_loop_arcs > number_of_left_arcs
+
+
 def reorder_nodes(order, x):
     """
     order = some_shuffle([0, 1, 2, 3, 4,..., n-1])
@@ -24,17 +32,15 @@ def reorder_nodes(order, x):
     x is the number of times the arrow faces from right ro left (<-) with respect to the order
     """
     n = len(order)
-    assert 0 <= x < n, "Must have at least one non-negative-arc"
-    assert n == len(set(order)), "No duplicates allowed"
+    assert x > count_left_arcs(order)
+    assert x < n, "Must have at least one non-negative-arc"
     new_order = copy.copy(order)
-    number_of_left_arcs = count_left_arcs(order)
-    if x > number_of_left_arcs:
-        sample = random.sample(range(n), x + 1)
-        for s in sample:
-            # TODO update positions as nodes are swapped
-            positions = {node: pos for pos, node in enumerate(new_order)}
-            q = positions[s]
-            correct_node_position(new_order, q)
+    sample = random.sample(range(n), x + 1)
+    for s in sample:
+        # TODO update positions as nodes are swapped
+        positions = {node: pos for pos, node in enumerate(new_order)}
+        q = positions[s]
+        correct_node_position(new_order, q)
     return new_order
 
 
@@ -58,15 +64,13 @@ def map_graph(graph, mapping):
     return new_graph
 
 
-def gen_remaining_loop_arcs(rand_state, graph, distances, number_of_negative_arcs):
-
+def gen_remaining_loop_arcs(random_state, graph, distances, number_of_negative_arcs):
     n = graph.number_of_nodes()
-
     def determine_if_negative(u):
         return distances[u] > distances[(u+1) % n] and number_of_negative_arcs > 0
 
     order = list(range(n))
-    rand_state.shuffle(order)
+    random_state.shuffle(order)
     for u in range(n):
         v = (u + 1) % n
         is_negative = determine_if_negative(u)
