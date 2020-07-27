@@ -47,7 +47,7 @@ def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap=mpl.cm.pla
 
 
 def draw_solution_tree_graph(
-    nx_graph, nx_tree, layout, ax, fig, curviture=0.1, cmap=mpl.cm.Oranges
+    nx_graph, tree_arcs, layout, ax, fig, curviture=0.1, cmap=mpl.cm.Oranges
 ):
     """Draws a shortest path tree over the top of the graph. The arcs in the tree
     are highlighted in red."""
@@ -60,7 +60,8 @@ def draw_solution_tree_graph(
         connectionstyle=curved_arcs(curviture),
     )
     nx.draw_networkx_edges(
-        nx_tree,
+        nx_graph,
+        edgelist=tree_arcs,
         pos=layout,
         ax=ax,
         connectionstyle=curved_arcs(curviture),
@@ -105,13 +106,12 @@ def draw_arc_sign_graph(
     plt.show()
 
 
-def draw_graph(graph, tree, distances):
+def draw_graph(graph, tree_arcs, distances):
     """Draws the three graph types in a single figure"""
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(24, 8))
     nx_graph = to_networkx(graph)
-    nx_tree = to_networkx(tree)
     layout = circle_layout(graph)
     draw_heatmap_graph(nx_graph, layout, ax0, fig)
-    draw_solution_tree_graph(nx_graph, nx_tree, layout, ax1, fig)
+    draw_solution_tree_graph(nx_graph, tree_arcs, layout, ax1, fig)
     draw_arc_sign_graph(nx_graph, distances, layout, ax2, fig)
     plt.show()

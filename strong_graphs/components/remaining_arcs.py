@@ -7,6 +7,7 @@ from typing import Dict, Hashable, List
 __all__ = ["gen_remaining_arcs"]
 
 
+
 def determine_predecessor_vacancies(graph, order):
     """    
     A vacancy represents the lack of an inward arc to a node
@@ -30,14 +31,14 @@ def determine_predecessor_vacancies(graph, order):
     return vacancies
 
 
-def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_neg, m_pos):
+def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
     """
     Negative arcs (really <=) must be allocated to <- vacancies 
     Positive arcs (really >=) can be allocated to both <- and -> vacancies
     """
     allocation = {"<=": distribute(ξ, vacancies["<-"], m_neg)}
     remaining_combined_vacancies = {
-        i: vacancies["->"] + vacancies["<-"][i] - allocation["<="]
+        i: vacancies["->"][i] + vacancies["<-"][i] - allocation["<="][i]
         for i in graph.nodes()
     }
     allocation[">="] = distribute(ξ, remaining_combined_vacancies, m_pos)
@@ -45,15 +46,22 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_neg, m_pos):
 
 
 def gen_remaining_arcs(
-    ξ, graph, distances, n, m_pos, m_neg,
-):
+    ξ, graph, distances, n,  m, r,
+):  
+    m_remaining = m - graph.number_of_arcs()
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
+    negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())
+    m_neg = min(math.floor(r*m_remaining), negative_arc_vacancies) 
+    m_pos = m_remaining - m_neg
+    total_capacity = negative_arc_vacancies + sum(q for q in arc_vacancies["->"].values())
+    assert negative_arc_vacancies >= m_neg, ""
+    assert total_capacity >= m_pos + m_neg, ""
     allocation = allocate_predecessors_to_nodes(ξ, graph, arc_vacancies, m_pos, m_neg)
     # Generate predecessors
     def generate_arcs(sample_range, q, threshold=0, shuffle=False):
         """Can be used for both for both <- and -> arcs"""
-        samples = ξ.sample(sample_range, q+2)
+        samples = ξ.sample(sample_range, min(q+2, len(sample_range)))
         if shuffle:
             ξ.shuffle(samples)
         count = 0
@@ -67,9 +75,10 @@ def gen_remaining_arcs(
 
     for pos, v in enumerate(order):
         nb_pos_to_the_left = ξ.randint(
-            a=allocation[">="][v] - arc_vacancies["->"][v],
-            b=min(m_pos, arc_vacancies["left"][v] - allocation["<="][v]),
+            a=max(0, allocation[">="][v] - arc_vacancies["->"][v]),
+            b=min(m_pos, arc_vacancies["<-"][v] - allocation["<="][v]),
         )
+        assert nb_pos_to_the_left >= 0, f"{nb_pos_to_the_left=}"
         nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
         nb_to_the_right = allocation[">="][v] - nb_pos_to_the_left
         # Generate to the left <-

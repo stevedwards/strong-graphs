@@ -42,7 +42,7 @@ def gen_tree_arcs(random_state, n, m):
         yield (0, v)
         dive(v)
     else:
-        dive(0)
+        yield from dive(0)
     # Remaining nodes must have exactly one parent, choose from nodes in tree.
     parentless = list(parentless)
     random_state.shuffle(parentless)

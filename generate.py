@@ -17,7 +17,8 @@ from strong_graphs.utils import nb_arcs_from_density
 @click.option('-x2', type=(float, float), default=(0, 100), help="Remaining arc distribution bounds (0, 100)")
 @click.option('-r', type=float, default=1, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
 @click.option('-ensure_non_neg', type=bool, default=False, help="Ensure remaining arc weights are non-negative (False)")
- 
+
+
 def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
     assert 0 <= d <= 1, f"Density {d} must be between 0 and 1"
     assert r is None or 0 <= r <= 1, f"Proportion of negative remaining arcs between 0 and 1, {r=}"
@@ -43,10 +44,8 @@ def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
         n,
         m,
         r,
-        tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x1[1]),
-        non_tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x2[1]),
-        arc_distribution=distribute,
-        ensure_non_negative=ensure_non_neg,
+        D_tree=partial(random.Random.randint, a=x1[0], b=x1[1]),
+        D_remaining=partial(random.Random.randint, a=x2[0], b=x2[1]),
     )
     draw_graph(network, tree, distances)
     sum_of_distances = sum(distances.values())
