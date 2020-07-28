@@ -14,6 +14,7 @@ from strong_graphs.components.reordering import (
     reorder_nodes,
     create_mapping,
 )
+from numpy import nextafter
 from strong_graphs.draw import draw_graph
 from strong_graphs.utils import determine_alpha_beta
 
@@ -23,11 +24,12 @@ __all__ = ["build_instance"]
 
 def determine_arc_signs(random_state, graph, m, r):
     n = graph.number_of_nodes()
+    r = nextafter(r, 0.5)
     arcs_remaining = m - graph.number_of_arcs()
     assert arcs_remaining >= 0
     nb_current_negative_arcs = sum(1 for u, v, w in graph.arcs() if w < 0)
     maximum_negative_arcs = int(n * (n - 1) / 2)
-    α, β = determine_alpha_beta(r)
+    α, β = determine_alpha_beta(float(r))
     neg_loop_arcs = math.floor(random_state.betavariate(α, β)*(n-1))
     return min(neg_loop_arcs, maximum_negative_arcs, nb_current_negative_arcs)
 
@@ -70,6 +72,7 @@ def build_instance(
     # Determine the signs of remaining arc noting that the tree
     # might have to be relabelled for large ratios of negative arcs
     m_neg_loop = determine_arc_signs(ξ, network, m, r)
+    mapping={}
     if remapping_required(distances, m_neg_loop):
         mapping = create_mapping(distances, m_neg_loop)
         source = mapping[source]
@@ -85,15 +88,16 @@ def build_instance(
         w = determine_arc_weight(ξ, D_remaining, δ, is_negative)
         assert (is_negative and w <= 0) or (not is_negative and w >= 0)
         network.add_arc(u, v, w)
-    return network, tree_arcs, distances, source
+    return network, tree_arcs, distances, mapping
 
 
 if __name__ == "__main__":
     random_state = random.Random()
     n = 20              # Number of nodes
-    d = 1              # Density
-    r = 0.5               # Ratio of negative arcs
-    m = n + math.floor(d * n * (n - 2)) 
+    d = 0.5              # Density
+    r = 0.75               # Ratio of negative arcs
+    #m = n + math.floor(d * n * (n - 2)) 
+    m = int(n*(n-1)/2) + 1
     network, tree_arcs, distances, source = build_instance(
         random_state,
         n=n,

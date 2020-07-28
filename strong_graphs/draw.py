@@ -3,10 +3,10 @@ import math
 import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
 from strong_graphs.network import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
-
 
 def curved_arcs(radius):
     """Returns string required for networkx 'connectionstyle' keyword to generate 
@@ -14,12 +14,11 @@ def curved_arcs(radius):
     return f"arc3, rad={radius}"
 
 
-def circle_layout(graph):
+def circle_layout(n):
     """Custom node layout to have nodes positioned in an anti-clockwise circle starting from
     the middle left"""
-    n = graph.number_of_nodes()
     frac = 2 * math.pi / n
-    return {i: (-math.cos(i * frac), -math.sin(i * frac)) for i in graph.nodes()}
+    return {i: (-math.cos(i * frac), -math.sin(i * frac)) for i in range(n)}
 
 
 def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap=mpl.cm.plasma):
@@ -115,3 +114,5 @@ def draw_graph(graph, tree_arcs, distances):
     draw_solution_tree_graph(nx_graph, tree_arcs, layout, ax1, fig)
     draw_arc_sign_graph(nx_graph, distances, layout, ax2, fig)
     plt.show()
+
+        

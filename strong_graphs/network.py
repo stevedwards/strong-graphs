@@ -5,11 +5,15 @@ import networkx as nx
 class Network:
     """A network object that keeps track of both successors and predecessors"""
 
-    def __init__(self, id=None, nodes=None):
+    def __init__(self, id=None, nodes=None, animate=False):
         self.id = id
         self._arcs = dict()
         self._predecessors = {}
         self._successors = {}
+
+        if animate:
+            self.animation = Animation()
+
         if nodes is not None:
             for node in nodes:
                 self.add_node(node)
