@@ -9,4 +9,4 @@ python3 generate.py 20
 ![alt text][logo]
 
 ### Complexity
-The intended complexity of the generator is O(n + m). 
+The intended complexity of the generator is O(n + m). Currently I have O(n log n + m) I believe, with the log n coming from having to order the nodes by distance in order to add negative arc weights in a control way.

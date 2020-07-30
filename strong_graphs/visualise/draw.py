@@ -3,10 +3,10 @@ import math
 import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
-from .network import to_networkx
+from strong_graphs.data_structure import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
-
 
 def curved_arcs(radius):
     """Returns string required for networkx 'connectionstyle' keyword to generate 
@@ -14,12 +14,11 @@ def curved_arcs(radius):
     return f"arc3, rad={radius}"
 
 
-def circle_layout(graph):
+def circle_layout(n):
     """Custom node layout to have nodes positioned in an anti-clockwise circle starting from
     the middle left"""
-    n = graph.number_of_nodes()
     frac = 2 * math.pi / n
-    return {i: (-math.cos(i * frac), -math.sin(i * frac)) for i in graph.nodes()}
+    return {i: (-math.cos(i * frac), -math.sin(i * frac)) for i in range(n)}
 
 
 def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap=mpl.cm.plasma):
@@ -47,7 +46,7 @@ def draw_heatmap_graph(nx_graph, layout, ax, fig, curviture=0.1, cmap=mpl.cm.pla
 
 
 def draw_solution_tree_graph(
-    nx_graph, nx_tree, layout, ax, fig, curviture=0.1, cmap=mpl.cm.Oranges
+    nx_graph, tree_arcs, layout, ax, fig, curviture=0.1, cmap=mpl.cm.Oranges
 ):
     """Draws a shortest path tree over the top of the graph. The arcs in the tree
     are highlighted in red."""
@@ -60,7 +59,8 @@ def draw_solution_tree_graph(
         connectionstyle=curved_arcs(curviture),
     )
     nx.draw_networkx_edges(
-        nx_tree,
+        nx_graph,
+        edgelist=tree_arcs,
         pos=layout,
         ax=ax,
         connectionstyle=curved_arcs(curviture),
@@ -76,7 +76,7 @@ def draw_solution_tree_graph(
 
 
 def draw_arc_sign_graph(
-    nx_graph, layout, ax, fig, curviture=0.1, cmap=ListedColormap(Tropic_2.mpl_colors)
+    nx_graph, distances, layout, ax, fig, curviture=0.1, cmap=ListedColormap(Tropic_2.mpl_colors)
 ):
     """Draws the graphs where the sign, i.e. negative (<) or non-negative (≥), is indicated by
     different colours."""
@@ -88,7 +88,8 @@ def draw_arc_sign_graph(
     nx.draw_networkx(
         nx_graph,
         pos=layout,
-        with_labels=False,
+        #labels = distances,
+        with_labels=True,
         node_color="xkcd:dark sky blue",
         edge_color=edge_colours,
         style="dashdot",
@@ -104,13 +105,14 @@ def draw_arc_sign_graph(
     plt.show()
 
 
-def draw_graph(graph, tree, distances):
+def draw_graph(graph, tree_arcs, distances):
     """Draws the three graph types in a single figure"""
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(24, 8))
     nx_graph = to_networkx(graph)
-    nx_tree = to_networkx(tree)
-    layout = circle_layout(graph)
+    layout = circle_layout(graph.number_of_nodes())
     draw_heatmap_graph(nx_graph, layout, ax0, fig)
-    draw_solution_tree_graph(nx_graph, nx_tree, layout, ax1, fig)
-    draw_arc_sign_graph(nx_graph, layout, ax2, fig)
+    draw_solution_tree_graph(nx_graph, tree_arcs, layout, ax1, fig)
+    draw_arc_sign_graph(nx_graph, distances, layout, ax2, fig)
     plt.show()
+
+        

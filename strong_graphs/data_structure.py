@@ -1,20 +1,24 @@
 import networkx as nx
 
 
+
 class Network:
     """A network object that keeps track of both successors and predecessors"""
 
-    def __init__(self, id=None):
+    def __init__(self, id=None, nodes=None, animate=False):
         self.id = id
         self._arcs = dict()
         self._predecessors = {}
         self._successors = {}
+        if nodes is not None:
+            for node in nodes:
+                self.add_node(node)
 
     def __eq__(self, other):
         return (
-            self._arcs == other._arcs and
-            self._predecessors == other._predecessors and
-            self._successors == other._successors
+            self._arcs == other._arcs
+            and self._predecessors == other._predecessors
+            and self._successors == other._successors
         )
 
     def add_node(self, node_id):
@@ -27,7 +31,7 @@ class Network:
         assert u in self._predecessors, f"{u} not a node"
         assert v in self._predecessors, f"{v} not a node"
         assert u != v, f"no self loops {u} = {v}"
-        assert (u, v) not in self._arcs.keys()
+        assert (u, v) not in self._arcs.keys(), f"Arc already exists {(u,v)=}"
         self._arcs[(u, v)] = w
         self._predecessors[v].add((u, w))
         self._successors[u].add((v, w))
