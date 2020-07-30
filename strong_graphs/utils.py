@@ -5,9 +5,21 @@ from typing import Hashable, Dict, List, Tuple
 import random
 
 def nb_arcs_from_density(n: int, d: int) -> int:
-    """Determines how many arcs in a directed graph of n and density d"""
-    return n + math.floor(d * n * (n - 2))
+    """
+    Determines how many arcs in a directed graph of n and density d.
+    Using a function I derived that had the follow characteristics
+    m(d=0) = n, m(d=0.5) = (n)n-1/2 + 1, m(d=1) = n(n-1)
+    """
+    assert n > 1
+    assert 0 <= d <= 1
+    
+    return (2*n-4)*d**2 + d*(n-2)**2 + n
 
+def nb_arcs_for_highest_neg_density(n: int) -> int:
+    return nb_arcs_in_complete_dag(n) + 1
+
+def nb_arcs_in_complete_dag(n):
+    return round(n * (n - 1)/2)
 
 def determine_order(distances: Dict[Tuple, int]) -> List[Hashable]:
     """Sort tuple based on second value"""
@@ -29,24 +41,3 @@ def distribute(
         if allocation[select_node] == capacity[select_node]:
             choices.remove(select_node)
     return allocation
-
-
-
-def determine_alpha_beta(μ, control=100.0):
-    """The mean of the beta distribution is
-
-    μ = α / (α + β) => μ (α + β) = α
-                        β = α(1 - μ) / μ
-                        or μ α - α = - β μ
-                          α(1 - μ) = βμ
-                                α = β.μ/(1-μ)
-    """
-    assert 0 <= μ <= 1, "Mean must be valid"
-    if μ > 0.5:
-        α = control
-        β = α * (1 - μ) / μ
-    else:
-        β = control
-        α = β * μ / (1 - μ)
-    return α, β
-

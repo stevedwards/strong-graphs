@@ -1,5 +1,7 @@
 from strong_graphs.network import Network
+import math
 from collections import defaultdict
+import random
 
 def gen_tree_arcs(random_state, n, m):
     """Creating the optimal shortest path tree from node 0 to all remaining arcs for a given number
@@ -29,7 +31,7 @@ def gen_tree_arcs(random_state, n, m):
         """Add loop arcs to tree where possible"""
         while u in loop_arc_predecessors:
             tree_nodes.add(u + 1)
-            yield (u, u+1)
+            yield (u, u + 1)
             u += 1
 
     # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
@@ -50,7 +52,8 @@ def gen_tree_arcs(random_state, n, m):
         tree_nodes_list = list(tree_nodes)
         u = random_state.choice(tree_nodes_list)
         tree_nodes.add(v)
-        yield u, v
-        dive(v)
+        yield (u, v)
+        yield from dive(v)
+
 
 

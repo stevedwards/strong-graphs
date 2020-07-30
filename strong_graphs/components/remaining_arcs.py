@@ -1,11 +1,11 @@
 import math
 from collections import defaultdict, OrderedDict
 from strong_graphs.utils import distribute, determine_order
+from strong_graphs.negative import nb_neg_remaining
 from typing import Dict, Hashable, List
 
 
 __all__ = ["gen_remaining_arcs"]
-
 
 
 def determine_predecessor_vacancies(graph, order):
@@ -46,14 +46,15 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 
 
 def gen_remaining_arcs(
-    ξ, graph, distances, n,  m, r,
+    ξ, graph, distances, n,  m, m_neg,
 ):  
-    m_remaining = m - graph.number_of_arcs()
+    
+    m_remaining = m - graph.number_of_arcs() 
+    m_neg = nb_neg_remaining(graph, m_neg)
+    m_pos = m_remaining - m_neg
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
     negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())
-    m_neg = min(math.floor(r*m_remaining), negative_arc_vacancies) 
-    m_pos = m_remaining - m_neg
     total_capacity = negative_arc_vacancies + sum(q for q in arc_vacancies["->"].values())
     assert negative_arc_vacancies >= m_neg, ""
     assert total_capacity >= m_pos + m_neg, ""

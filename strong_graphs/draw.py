@@ -109,7 +109,7 @@ def draw_graph(graph, tree_arcs, distances):
     """Draws the three graph types in a single figure"""
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(24, 8))
     nx_graph = to_networkx(graph)
-    layout = circle_layout(graph)
+    layout = circle_layout(graph.number_of_nodes())
     draw_heatmap_graph(nx_graph, layout, ax0, fig)
     draw_solution_tree_graph(nx_graph, tree_arcs, layout, ax1, fig)
     draw_arc_sign_graph(nx_graph, distances, layout, ax2, fig)

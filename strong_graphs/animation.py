@@ -13,11 +13,16 @@ from palettable.cartocolors.diverging import Tropic_2
 from progress.bar import Bar
 import math
 
+
 def animate(network, tree_arcs, distances, mapping):
     n = network.number_of_nodes()
     G = nx.DiGraph()
     curviture = 0.1
     non_tree_arcs = []
+    if mapping:
+        reverse_map = {v: k for k, v in mapping.items()}
+    else:
+        reverse_map = {i: i for i in range(n)}
     for i in range(n):
         G.add_node(i)
     for u, v, w in network.arcs():
@@ -28,6 +33,9 @@ def animate(network, tree_arcs, distances, mapping):
     plt.axis("off")
     pos = circle_layout(n)
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    nx.draw_networkx(
+        G, pos, with_labels=False, node_color="white", edge_color="white", ax=ax
+    )
 
     def draw_nodes(graph):
         for i in range(n):
@@ -38,63 +46,140 @@ def animate(network, tree_arcs, distances, mapping):
                 ),
             ) if graph else 0
 
+    def draw_tree_loops(graph):
+        for u in range(n):
+            m_u = reverse_map[u]
+            m_v = (m_u+1%n)
+            if (m_u, m_v) in tree_arcs:
+                yield (
+                    nx.draw_networkx_edges(
+                        graph,
+                        pos,
+                        edgelist=[(m_u, m_v)],
+                        ax=ax,
+                        edge_color="xkcd:red",
+                        connectionstyle=curved_arcs(curviture),
+                    )[0],
+                ) if graph else 0
+
     def draw_tree(graph):
         for u, v in tree_arcs:
+            m_u = reverse_map[u]
+            m_v = reverse_map[v]
+            if m_v != (m_u+1)%n:
+                yield (
+                    nx.draw_networkx_edges(
+                        graph,
+                        pos,
+                        edgelist=[(m_u, m_v)],
+                        ax=ax,
+                        edge_color="xkcd:red",
+                        connectionstyle=curved_arcs(curviture),
+                    )[0],
+                ) if graph else 0
+
+    # Remap tree
+    def remap_tree(graph):
+        for (u, v) in tree_arcs:
+            m_u = reverse_map[u]
+            m_v = reverse_map[v]
+            if (m_u, m_v) != (u, v):
+                yield (
+                    nx.draw_networkx_edges(
+                        graph,
+                        pos,
+                        edgelist=[(m_u, m_v)],
+                        ax=ax,
+                        width=2,
+                        edge_color="xkcd:white",
+                        connectionstyle=curved_arcs(curviture),
+                    )[0],
+                ) if graph else 0
+                yield (
+                    nx.draw_networkx_edges(
+                        graph,
+                        pos,
+                        edgelist=[(u, v)],
+                        ax=ax,
+                        edge_color="xkcd:red",
+                        connectionstyle=curved_arcs(curviture),
+                    )[0],
+                ) if graph else 0
+
+    colours = ListedColormap(Tropic_2.mpl_colors)
+ 
+    def draw_remaining_loops(graph):
+        for u in range(n):
+            v = (u + 1) % n
+            if (u, v) not in tree_arcs:
+                w = network._arcs[(u, v)]
+                colour = colours(0) if w > 0 else colours(1)
+                yield (
+                nx.draw_networkx_edges(
+                    graph,
+                    pos,
+                    edgelist=[(u, v)],
+                    ax=ax,
+                    width=0.5,
+                    edge_color=colour,
+                    connectionstyle=curved_arcs(curviture),
+                )[0],
+            ) if graph else 0
+
+    def draw_remaining_arcs(graph):
+        for u, v in non_tree_arcs:
+            w = network._arcs[(u, v)]
+            colour = colours(0) if w > 0 else colours(1)
             yield (
                 nx.draw_networkx_edges(
                     graph,
                     pos,
                     edgelist=[(u, v)],
                     ax=ax,
-                    edge_color="xkcd:red",
+                    width=0.5,
+                    edge_color=colour,
                     connectionstyle=curved_arcs(curviture),
                 )[0],
             ) if graph else 0
 
-    colours = ListedColormap(Tropic_2.mpl_colors)
-    def draw_remaining_arcs(graph):
-        for u, v in non_tree_arcs:
-            w = network._arcs[(u, v)]
-            colour = colours(0) if w > 0 else colours(1)
-            yield (nx.draw_networkx_edges(
-                    graph,
-                    pos,
-                    edgelist=[(u, v)],
-                    ax=ax,
-                    style="dashed",
-                    width=0.5,
-                    edge_color=colour,
-                    connectionstyle=curved_arcs(curviture),
-                )[0],) if graph else 0
-
     def generate_frame(graph=None):
-        
         yield from draw_nodes(graph)
+        yield from draw_tree_loops(graph)
         yield from draw_tree(graph)
+        yield from remap_tree(graph)
+        yield from draw_remaining_loops(graph)
         yield from draw_remaining_arcs(graph)
 
     frames = generate_frame(G)
     num_frames = sum(1 for _ in generate_frame(None))
-    
+
     bar = Bar(max=num_frames)
+
     def update(i):
         bar.next()
         return next(frames)
 
     # output animation; its important I save it
     ani = FuncAnimation(
-        fig, update, interval=1, repeat_delay=1000, frames=range(num_frames - 2), blit=False
+        fig,
+        update,
+        interval=10,
+        repeat_delay=100000,
+        frames=num_frames - 2,
+        repeat=False,
+        blit=True,
     )
     bar.finish()
-    ani.save("strong.gif", writer='imagemagick', savefig_kwargs={"facecolor": "white"})
-
+    ani.save("strong.gif", writer="imagemagick", savefig_kwargs={"facecolor": "white"})
+    #plt.show
 
 if __name__ == "__main__":
     random_state = random.Random(0)
-    n = 20  # Number of nodes
+    n = 10  # Number of nodes
     d = 1  # Density
     r = 1  # Ratio of negative arcs
     m = n + math.floor(d * n * (n - 2))
+    m = n + 3
     #m = int(n * (n - 1) / 2) + 1
     print("Building graph")
     network, tree_arcs, distances, mapping = build_instance(
