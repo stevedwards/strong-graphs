@@ -13,7 +13,7 @@ def nb_arcs_from_density(n: int, d: int) -> int:
     """
     assert n > 1
     assert 0 <= d <= 1
-    return (2 * n - 4) * d ** 2 + d * (n - 2) ** 2 + n
+    return round((2 * n - 4) * d ** 2 + d * (n - 2) ** 2 + n)
 
 
 def nb_arcs_for_highest_neg_density(n: int) -> int:

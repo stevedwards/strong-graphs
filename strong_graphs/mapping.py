@@ -1,7 +1,7 @@
 import copy
 import random
 from strong_graphs.utils import determine_order
-from strong_graphs.network import Network
+from strong_graphs.data_structure import Network
 
 __all__ = ["map_distances", "map_graph", "mapping_required"]
 
@@ -37,13 +37,22 @@ def reorder_nodes(order, x):
     return new_order
 
 
-def mapping_required(order, nb_neg_loop_arcs):
+def create_mapping(order, m_neg):
+    new_order = reorder_nodes(order, m_neg)
+    mapping = {old: new for old, new in zip(order, new_order)}
+    return mapping
+
+
+def mapping_required(distances, nb_neg_loop_arcs):
+    if nb_neg_loop_arcs == 0:
+        return None
+    order = determine_order(distances)
     n = len(order)
     assert 0 <= nb_neg_loop_arcs < n, "Must have at least one non-negative-arc"
     assert n == len(set(order)), "No duplicates allowed"
     number_of_left_arcs = count_left_arcs(order)
     return (
-        reorder_nodes(order, nb_neg_loop_arcs)
+        create_mapping(order, nb_neg_loop_arcs)
         if nb_neg_loop_arcs > number_of_left_arcs
         else None
     )

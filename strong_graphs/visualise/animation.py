@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.animation import FuncAnimation, PillowWriter
 from strong_graphs.generator import build_instance
-from strong_graphs.draw import curved_arcs
-from draw import circle_layout
+from strong_graphs.draw import curved_arcs, circle_layout
 import random
 from functools import partial
 import itertools

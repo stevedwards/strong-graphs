@@ -5,7 +5,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
-from strong_graphs.network import to_networkx
+from strong_graphs.data_structure import to_networkx
 from palettable.cartocolors.diverging import Tropic_2
 
 def curved_arcs(radius):

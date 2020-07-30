@@ -3,7 +3,7 @@ from collections import defaultdict, OrderedDict
 from strong_graphs.utils import distribute, determine_order
 from strong_graphs.negative import nb_neg_remaining
 from typing import Dict, Hashable, List
-
+from progress.bar import Bar
 
 __all__ = ["gen_tree_arcs", "gen_loop_arcs", "gen_remaining_arcs"]
 
@@ -15,10 +15,13 @@ def gen_tree_arcs(random_state, n, m):
     loop_arc_predecessors = set(random_state.sample(range(n - 1), nb_loop_arcs))
     tree_nodes = set([0])
 
+    bar = Bar("tree arcs", max=n-1)
+
     def dive(u):
         """Add loop arcs to tree where possible"""
         while u in loop_arc_predecessors:
             tree_nodes.add(u + 1)
+            bar.next()
             yield (u, u + 1)
             u += 1
 
@@ -29,6 +32,7 @@ def gen_tree_arcs(random_state, n, m):
     if 0 not in loop_arc_predecessors:
         v = random_state.choice(list(parentless))
         parentless.remove(v)
+        bar.next()
         yield (0, v)
         dive(v)
     else:
@@ -40,8 +44,10 @@ def gen_tree_arcs(random_state, n, m):
         tree_nodes_list = list(tree_nodes)
         u = random_state.choice(tree_nodes_list)
         tree_nodes.add(v)
+        bar.next()
         yield (u, v)
         yield from dive(v)
+    bar.finish()
 
 
 # ----------------------------------------------------------
@@ -53,13 +59,16 @@ def gen_loop_arcs(random_state, graph, distances, number_of_negative_arcs):
 
     order = list(range(n))
     random_state.shuffle(order)
+    bar = Bar("loop arcs", max=n)
     for u in range(n):
         v = (u + 1) % n
         is_negative = determine_if_negative(u, v)
         if is_negative:
             number_of_negative_arcs -= 1
         if (u, v) not in graph._arcs.keys():
+            bar.next()
             yield (u, v, is_negative)
+    bar.finish()
 
 
 # -----------------------------------------------------------
@@ -103,7 +112,6 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 def gen_remaining_arcs(
     ξ, graph, distances, n, m, m_neg,
 ):
-
     m_remaining = m - graph.number_of_arcs()
     m_neg = nb_neg_remaining(graph, m_neg)
     m_pos = m_remaining - m_neg
@@ -129,12 +137,16 @@ def gen_remaining_arcs(
             if (u, v) not in graph._arcs:
                 is_negative = count < threshold
                 count += 1
+                bar.next()
                 yield u, v, is_negative
 
+    bar = Bar("remaining arcs", max=m_remaining)
     for pos, v in enumerate(order):
+        low_int = max(0, allocation[">="][v] - arc_vacancies["->"][v])
+        high_int = min(m_pos, arc_vacancies["<-"][v] - allocation["<="][v])
         nb_pos_to_the_left = ξ.randint(
-            a=max(0, allocation[">="][v] - arc_vacancies["->"][v]),
-            b=min(m_pos, arc_vacancies["<-"][v] - allocation["<="][v]),
+            a=low_int,
+            b=high_int,
         )
         assert nb_pos_to_the_left >= 0, f"{nb_pos_to_the_left=}"
         nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
@@ -151,3 +163,4 @@ def gen_remaining_arcs(
         if nb_to_the_right > 0:
             yield from generate_arcs(sample_range=range(pos), q=nb_to_the_right)
 
+    bar.finish()

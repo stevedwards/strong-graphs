@@ -1,6 +1,7 @@
 import networkx as nx
 
 
+
 class Network:
     """A network object that keeps track of both successors and predecessors"""
 

@@ -74,7 +74,7 @@ def nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop):
 
 def nb_neg_remaining(network, m_neg):
     """Note here the <= is deliberate as some negative arcs might be forced to 0
-    given pre-existing distributions.
+    given pre-existing distributions. 
     """ 
     return m_neg - sum(1 for u,v,w in network.arcs() if w <= 0)
 

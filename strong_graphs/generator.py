@@ -65,7 +65,7 @@ def build_instance(ξ, n, m, r, D):
         network.add_arc(u, v, w)
     distances = shortest_path(network)
     # Determine the number of negative loop arcs
-    m_neg_tree_loop = sum(1 for u, v in tree_arcs if v == (u + 1) % n)
+    m_neg_tree_loop = sum(1 for u, v in tree_arcs if v == (u + 1) % n and w <= 0)
     m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
     if (mapping := mapping_required(distances, m_neg_loop)) :
         tree_arcs = set((mapping[u], mapping[v]) for (u, v) in tree_arcs)
@@ -85,10 +85,10 @@ def build_instance(ξ, n, m, r, D):
 
 if __name__ == "__main__":
 
-    random_state = random.Random()
-    n = 10  # Number of nodes
-    d = 1  # Density
-    r = 0.2  # Ratio of negative arcs
+    random_state = random.Random(0)
+    n = 20  # Number of nodes
+    d = 0.5  # Density
+    r = 1  # Ratio of negative arcs
     D = partial(random.Random.randint, a=-1000, b=1000)
     m = nb_arcs_from_density(n, d)
     network, tree_arcs, distances, source = build_instance(
