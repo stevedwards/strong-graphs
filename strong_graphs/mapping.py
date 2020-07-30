@@ -11,12 +11,27 @@ def count_left_arcs(order):
     return sum(1 for u in range(n) if order[u] > order[(u + 1) % n])
 
 
-def correct_node_position(order, q):
-    i = order[q]
+def correct_node_position(order, positions, new_position_j):
+    """
+    Some order 0, 4, 2, 3, 1
+         and q ∈ [0, ..., len(order)-1], say 1
+
+    q = 1
+    i = 4
+    pos_i = 5 - 1 - 4 = 0
+    j = 0
+    order[1] = 0, order[0] = 4
+    pos[0] = 1,   pos[4] = 0 
+    return 4, 0, 2, 3, 1
+    """
+    i = order[new_position_j]
     new_position_i = len(order) - 1 - i
     j = order[new_position_i]
-    order[q], order[new_position_i] = j, i
-    return order
+    order[new_position_j] = j
+    order[new_position_i] = i
+    positions[j] = new_position_j
+    positions[i] = new_position_i
+    return order, positions
 
 
 def reorder_nodes(order, x):
@@ -28,12 +43,11 @@ def reorder_nodes(order, x):
     assert x > count_left_arcs(order)
     assert x < len(order), "Must have at least one non-negative-arc"
     new_order = copy.copy(order)
+    positions = {node: pos for pos, node in enumerate(new_order)}
     sample = random.sample(range(len(order)), x + 1)
     for s in sample:
-        # TODO update positions as nodes are swapped
-        positions = {node: pos for pos, node in enumerate(new_order)}
         q = positions[s]
-        correct_node_position(new_order, q)
+        new_order, positions = correct_node_position(new_order, positions, q)
     return new_order
 
 
