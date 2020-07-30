@@ -11,7 +11,16 @@ __all__ = [
 
 def determine_alpha_beta(μ, control=100.0):
     """
-    The mean of the beta distribution is
+    Beta distributions are used to choose the number of negative arcs at 
+    different stages, i.e., how many negative arcs are 
+    - in the optimal tree 
+    - in the loop
+    - in the remaining arcs
+    This ensure the number of negative arcs adds up to the total while 
+    ensuring the generator is still complete.
+
+    This function calculates the parameters of the beta distribution for
+    a desired mean.
     μ = α / (α + β) => β = α(1 - μ) / μ or α = β.μ/(1-μ)
     """
     assert 0 <= μ <= 1, f"Mean must be valid {μ=}"
@@ -38,6 +47,8 @@ def sample_number(ξ, min_value, max_value, expected) -> int:
 
 
 def nb_neg_arcs(n, m, r):
+    """ The total number of negative arcs is decided by the ratio
+    but capped at the number corresponding to a complete DAG"""
     m_dag = nb_arcs_in_complete_dag(n)
     return min(round(r * (m-1)), m_dag)
 
@@ -62,6 +73,9 @@ def nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop):
     return x
 
 def nb_neg_remaining(network, m_neg):
+    """Note here the <= is deliberate as some negative arcs might be forced to 0
+    given pre-existing distributions.
+    """ 
     return m_neg - sum(1 for u,v,w in network.arcs() if w <= 0)
 
 

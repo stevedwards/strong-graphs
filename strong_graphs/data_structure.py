@@ -1,7 +1,6 @@
 import networkx as nx
 
 
-
 class Network:
     """A network object that keeps track of both successors and predecessors"""
 
@@ -10,10 +9,6 @@ class Network:
         self._arcs = dict()
         self._predecessors = {}
         self._successors = {}
-
-        if animate:
-            self.animation = Animation()
-
         if nodes is not None:
             for node in nodes:
                 self.add_node(node)
@@ -69,4 +64,3 @@ def to_networkx(graph):
     for (u, v, w) in graph.arcs():
         n.add_edge(u, v, weight=w)
     return n
-

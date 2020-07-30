@@ -178,17 +178,13 @@ if __name__ == "__main__":
     n = 10  # Number of nodes
     d = 1  # Density
     r = 1  # Ratio of negative arcs
-    m = n + math.floor(d * n * (n - 2))
-    m = n + 3
-    #m = int(n * (n - 1) / 2) + 1
     print("Building graph")
     network, tree_arcs, distances, mapping = build_instance(
         random_state,
         n=n,
         m=m,
         r=r,
-        D_tree=partial(random.Random.randint, a=-1000, b=-1),  # -100000, b=-1),
-        D_remaining=partial(random.Random.randint, a=0, b=1000),
+        D=partial(random.Random.randint, a=-1000, b=1000),
     )
     print("Creating gif")
     animate(network, tree_arcs, distances, mapping)

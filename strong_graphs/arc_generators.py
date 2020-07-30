@@ -5,9 +5,64 @@ from strong_graphs.negative import nb_neg_remaining
 from typing import Dict, Hashable, List
 
 
-__all__ = ["gen_remaining_arcs"]
+__all__ = ["gen_tree_arcs", "gen_loop_arcs", "gen_remaining_arcs"]
 
 
+def gen_tree_arcs(random_state, n, m):
+    assert m > n - 1, "Number of arcs must be able to form a tree"
+    # Sample the minimum required loop arcs
+    nb_loop_arcs = max(0, 2 * n - 1 - m)
+    loop_arc_predecessors = set(random_state.sample(range(n - 1), nb_loop_arcs))
+    tree_nodes = set([0])
+
+    def dive(u):
+        """Add loop arcs to tree where possible"""
+        while u in loop_arc_predecessors:
+            tree_nodes.add(u + 1)
+            yield (u, u + 1)
+            u += 1
+
+    # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
+    # loop arcs as they will be added by diving when the predecessor is added.
+    parentless = set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
+    # Source node must have at least one child, choose from parentless nodes
+    if 0 not in loop_arc_predecessors:
+        v = random_state.choice(list(parentless))
+        parentless.remove(v)
+        yield (0, v)
+        dive(v)
+    else:
+        yield from dive(0)
+    # Remaining nodes must have exactly one parent, choose from nodes in tree.
+    parentless = list(parentless)
+    random_state.shuffle(parentless)
+    for v in parentless:
+        tree_nodes_list = list(tree_nodes)
+        u = random_state.choice(tree_nodes_list)
+        tree_nodes.add(v)
+        yield (u, v)
+        yield from dive(v)
+
+
+# ----------------------------------------------------------
+def gen_loop_arcs(random_state, graph, distances, number_of_negative_arcs):
+    n = graph.number_of_nodes()
+
+    def determine_if_negative(u, v):
+        return distances[u] > distances[v] and number_of_negative_arcs > 0
+
+    order = list(range(n))
+    random_state.shuffle(order)
+    for u in range(n):
+        v = (u + 1) % n
+        is_negative = determine_if_negative(u, v)
+        if is_negative:
+            number_of_negative_arcs -= 1
+        if (u, v) not in graph._arcs.keys():
+            yield (u, v, is_negative)
+
+
+# -----------------------------------------------------------
 def determine_predecessor_vacancies(graph, order):
     """    
     A vacancy represents the lack of an inward arc to a node
@@ -46,23 +101,25 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 
 
 def gen_remaining_arcs(
-    ξ, graph, distances, n,  m, m_neg,
-):  
-    
-    m_remaining = m - graph.number_of_arcs() 
+    ξ, graph, distances, n, m, m_neg,
+):
+
+    m_remaining = m - graph.number_of_arcs()
     m_neg = nb_neg_remaining(graph, m_neg)
     m_pos = m_remaining - m_neg
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
     negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())
-    total_capacity = negative_arc_vacancies + sum(q for q in arc_vacancies["->"].values())
+    total_capacity = negative_arc_vacancies + sum(
+        q for q in arc_vacancies["->"].values()
+    )
     assert negative_arc_vacancies >= m_neg, ""
     assert total_capacity >= m_pos + m_neg, ""
     allocation = allocate_predecessors_to_nodes(ξ, graph, arc_vacancies, m_pos, m_neg)
     # Generate predecessors
     def generate_arcs(sample_range, q, threshold=0, shuffle=False):
         """Can be used for both for both <- and -> arcs"""
-        samples = ξ.sample(sample_range, min(q+2, len(sample_range)))
+        samples = ξ.sample(sample_range, min(q + 2, len(sample_range)))
         if shuffle:
             ξ.shuffle(samples)
         count = 0
@@ -92,7 +149,5 @@ def gen_remaining_arcs(
             )
         # Generate to the right ->
         if nb_to_the_right > 0:
-            yield from generate_arcs(
-                sample_range=range(pos),
-                q=nb_to_the_right              
-            )
+            yield from generate_arcs(sample_range=range(pos), q=nb_to_the_right)
+
