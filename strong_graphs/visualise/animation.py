@@ -173,13 +173,13 @@ def animate(network, tree_arcs, distances, mapping):
     #plt.show
 
 if __name__ == "__main__":
-    random_state = random.Random(0)
+    ξ = random.Random(0)
     n = 10  # Number of nodes
     d = 1  # Density
     r = 1  # Ratio of negative arcs
     print("Building graph")
     network, tree_arcs, distances, mapping = build_instance(
-        random_state,
+        ξ,
         n=n,
         m=m,
         r=r,

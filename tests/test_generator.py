@@ -16,10 +16,10 @@ def test_seed_consistency(n, m, x1, x2, ensure_non_negative):
     instances = []
     for seed in (seed1, seed1, seed2):
         # Replicates what's in the CLI at the moment.
-        random_state = random.Random(seed)
+        ξ = random.Random(seed)
         instances.append(
             build_instance(
-                random_state,
+                ξ,
                 n,
                 m,
                 tree_weight_distribution=partial(random.Random.randint, a=x1[0], b=x1[1]),

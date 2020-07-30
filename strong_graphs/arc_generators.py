@@ -8,14 +8,13 @@ from progress.bar import Bar
 __all__ = ["gen_tree_arcs", "gen_loop_arcs", "gen_remaining_arcs"]
 
 
-def gen_tree_arcs(random_state, n, m):
+def gen_tree_arcs(ξ, n, m, m_neg):
     assert m > n - 1, "Number of arcs must be able to form a tree"
     # Sample the minimum required loop arcs
     nb_loop_arcs = max(0, 2 * n - 1 - m)
-    loop_arc_predecessors = set(random_state.sample(range(n - 1), nb_loop_arcs))
+    loop_arc_predecessors = set(ξ.sample(range(n - 1), nb_loop_arcs))
     tree_nodes = set([0])
-
-    bar = Bar("tree arcs", max=n-1)
+    bar = Bar("tree arcs (>=)", max=m_neg)
 
     def dive(u):
         """Add loop arcs to tree where possible"""
@@ -30,7 +29,7 @@ def gen_tree_arcs(random_state, n, m):
     parentless = set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
     # Source node must have at least one child, choose from parentless nodes
     if 0 not in loop_arc_predecessors:
-        v = random_state.choice(list(parentless))
+        v = ξ.choice(list(parentless))
         parentless.remove(v)
         bar.next()
         yield (0, v)
@@ -39,10 +38,10 @@ def gen_tree_arcs(random_state, n, m):
         yield from dive(0)
     # Remaining nodes must have exactly one parent, choose from nodes in tree.
     parentless = list(parentless)
-    random_state.shuffle(parentless)
+    ξ.shuffle(parentless)
     for v in parentless:
         tree_nodes_list = list(tree_nodes)
-        u = random_state.choice(tree_nodes_list)
+        u = ξ.choice(tree_nodes_list)
         tree_nodes.add(v)
         bar.next()
         yield (u, v)
@@ -51,14 +50,14 @@ def gen_tree_arcs(random_state, n, m):
 
 
 # ----------------------------------------------------------
-def gen_loop_arcs(random_state, graph, distances, number_of_negative_arcs):
+def gen_loop_arcs(ξ, graph, distances, number_of_negative_arcs):
     n = graph.number_of_nodes()
 
     def determine_if_negative(u, v):
         return distances[u] > distances[v] and number_of_negative_arcs > 0
 
     order = list(range(n))
-    random_state.shuffle(order)
+    ξ.shuffle(order)
     bar = Bar("loop arcs", max=n)
     for u in range(n):
         v = (u + 1) % n

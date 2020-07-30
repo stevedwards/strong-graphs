@@ -38,9 +38,9 @@ def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
     - Random seed, {s=}
     - Ensuring other arcs are non-neg, {ensure_non_neg=}
     """)
-    random_state = random.Random(s)
+    ξ = random.Random(s)
     network, tree, distances = build_instance(
-        random_state,
+        ξ,
         n,
         m,
         r,

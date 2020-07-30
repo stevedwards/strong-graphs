@@ -42,7 +42,7 @@ def shortest_path(tree):
 
 
 def distribute(
-    random_state, capacity: Dict[Hashable, int], quantity: int
+    ξ, capacity: Dict[Hashable, int], quantity: int
 ) -> Dict[Hashable, int]:
     """A method to distribute a quantity amongst choices with given capacities"""
     assert (
@@ -51,7 +51,7 @@ def distribute(
     choices = set(key for key, value in capacity.items() if value >= 1)
     allocation = defaultdict(int)
     for _ in range(quantity):
-        select_node = random_state.choice(list(choices))
+        select_node = ξ.choice(list(choices))
         allocation[select_node] += 1
         if allocation[select_node] == capacity[select_node]:
             choices.remove(select_node)
