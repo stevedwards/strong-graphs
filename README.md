@@ -1,8 +1,12 @@
 # Strong Graphs
 A graph generator for strongly connected directed graphs with controllable features.
 
+* Example 1. Complete graph with 50% negative arcs
+
 [logo1]: docs/fast.gif "Complete Graph Generation"
 ![alt text][logo1]
+
+* Example 2. As many negative arcs as possible
 
 [logo2]: docs/strong.gif "Complete Graph Generation"
 ![alt text][logo2]
