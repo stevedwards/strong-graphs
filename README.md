@@ -1,11 +1,18 @@
 # Strong Graphs
 A graph generator for strongly connected directed graphs with controllable features.
 
+[logo]: docs/fast.gif "Complete Graph Generation"
+![alt text][logo]
+
+[logo]: docs/strong.gif "Complete Graph Generation"
+![alt text][logo]
+
 Generate the following 💪 graphs with this command
 ``` #python 
 python3 generate.py 20
 ```
-[logo]: docs/20-complete.png "Logo Title Text 2"
+
+[logo]: docs/20-complete.png "Example Graph"
 ![alt text][logo]
 
 ### Complexity
