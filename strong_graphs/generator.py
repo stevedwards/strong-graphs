@@ -21,7 +21,11 @@ from strong_graphs.mapping import (
     mapping_required,
 )
 from strong_graphs.visualise.draw import draw_graph
-from strong_graphs.utils import nb_arcs_from_density, shortest_path
+from strong_graphs.utils import (
+    nb_arcs_from_density,
+    shortest_path,
+    nb_arcs_in_complete_dag,
+)
 
 __all__ = ["build_instance"]
 
@@ -49,12 +53,8 @@ def arc_weight_remaining(ξ, D, δ, is_negative):
         assert x >= 0, f"{x=}"
         return x
 
-
-def current_zero_loop_arcs(n, arcs):
-    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w == 0)
-
-def current_neg_loop_arcs(n, arcs):
-    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w < 0)
+def nb_current_non_pos_tree_loop(network):
+    return sum(1 for u, v, w in network.arcs() if v == (u + 1) and w <= 0)
 
 
 def build_instance(ξ, n, m, r, D):
@@ -70,15 +70,15 @@ def build_instance(ξ, n, m, r, D):
         w = arc_weight_tree(ξ, D, is_negative)
         tree_arcs.add((u, v))
         network.add_arc(u, v, w)
-    distances = shortest_path(network)
-    # Determine the number of negative loop arcs
-    m_neg_tree_loop = current_neg_loop_arcs(n, network.arcs)
+    distances = shortest_path(network) 
+    m_neg_tree_loop = min(m_neg_tree, nb_current_non_pos_tree_loop(network))
     m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
-    if (mapping := mapping_required(distances, tree_arcs, m, m_neg_loop)) :
+    # Determine the number of negative loop arcs
+    if (mapping := mapping_required(distances, m_neg_loop)):
         tree_arcs = set((mapping[u], mapping[v]) for (u, v) in tree_arcs)
         network = map_graph(network, mapping)
         distances = map_distances(distances, mapping)
-        m_neg_loop = min(m_neg_tree, current_neg_loop_arcs(n, network.arcs))
+        m_neg_loop = min(m_neg_tree, sum(1 for u, v in tree_arcs if v == (u + 1) % n and w <= 0))
     # Add the remaining arcs - first the loop arcs then the remaining arcs
     for (u, v, is_negative) in itertools.chain(
         gen_loop_arcs(ξ, network, distances, m_neg_loop - m_neg_tree_loop),
@@ -93,10 +93,10 @@ def build_instance(ξ, n, m, r, D):
 
 if __name__ == "__main__":
     ξ = random.Random(1)
-    n = 4  # Number of nodes
-    d = 0.0  # Density
-    r = 0  # Ratio of negative arcs
-    D = partial(random.Random.randint, a=0, b=0)
+    n = 6  # Number of nodes
+    d = 0.08972473588516851  # Density
+    r = 0.5000000000000001  # Ratio of negative arcs
+    D = partial(random.Random.randint, a=-1, b=1)
     m = nb_arcs_from_density(n, d)
 
     network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D,)

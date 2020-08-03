@@ -111,8 +111,8 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 def gen_remaining_arcs(
     ξ, graph, distances, n, m, m_neg_total,
 ):
-    m_remaining = m - graph.number_of_arcs()
-    assert m_remaining >= 0
+    m_remaining = max(0, m - graph.number_of_arcs())
+    #assert m_remaining >= 0
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
     negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())

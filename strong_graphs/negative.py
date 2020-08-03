@@ -52,14 +52,17 @@ def nb_neg_arcs(n, m, r):
     but capped at the number corresponding to a complete DAG"""
     assert n >= 2
     m_dag = nb_arcs_in_complete_dag(n)
-    return min(round(r * (m-1)), m_dag)
+    return min(round(r * (m - 1)), m_dag)
 
 
 def nb_neg_tree_arcs(ξ, n, m, m_neg):
     assert m_neg < m
     m_neg_tree_max = min(n - 1, m_neg)
-    expected = (m_neg / m) * (n - 1)
-    x = sample_number(ξ, min_value=0, max_value=m_neg_tree_max, expected=expected)
+    m_neg_tree_min = max(0, m_neg - (m - n))
+    expected = max(min((m_neg / m) * (n - 1), m_neg_tree_max), m_neg_tree_min)
+    x = sample_number(
+        ξ, min_value=m_neg_tree_min, max_value=m_neg_tree_max, expected=expected
+    )
     return x
 
 
@@ -68,17 +71,18 @@ def nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop):
     remaining_arcs = m - (n - 1)  # Where n - 1 is the arcs in the tree
     remaining_neg = m_neg - m_neg_tree
     ratio = remaining_neg / remaining_arcs
-    min_value = max(m_neg_tree_loop, m_neg - nb_arcs_in_complete_dag(n-1))
+    min_value = max(m_neg_tree_loop, m_neg - nb_arcs_in_complete_dag(n - 1))
     max_value = min(n - 1, m_neg)
     expected = max(min(max_value, ratio * (n - 1)), min_value)
     x = sample_number(ξ, min_value, max_value, expected)
     return x
 
+
 def nb_neg_remaining(network, m_neg):
     """Note here the <= is deliberate as some negative arcs might be forced to 0
     given pre-existing distributions. 
-    """ 
-    existing_negative_arcs = sum(1 for u,v,w in network.arcs() if w < 0)
+    """
+    existing_negative_arcs = sum(1 for u, v, w in network.arcs() if w < 0)
     return m_neg - existing_negative_arcs
 
 
@@ -94,8 +98,6 @@ if __name__ == "__main__":
     m_neg_tree = nb_neg_tree_arcs(ξ, n, m, m_neg)
     assert 0 <= m_neg_tree <= n - 1
     m_neg_tree_loop = ξ.randint(0, m_neg_tree)
-    m_neg_loop = nb_neg_loop_arcs(
-        ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop
-    )
+    m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
     assert 0 <= m_neg_loop <= n - 1
     assert m_neg_loop <= m_neg - m_neg_tree

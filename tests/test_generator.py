@@ -45,7 +45,8 @@ def test_generator(n, d, r, D_min, D_max):
     D = partial(random.Random.randint, a=-D_min, b=D_max)
     ξ = random.Random(1)
     net, tree1, dist1, map1 = build_instance(ξ, n, m, r, D)
-    assert m == net.number_of_arcs()
-    #nb_non_pos = sum(1 for u, v, w in net.arcs() if w <= 0)
-    # m_neg = nb_neg_arcs(n, d, r)
-    # assert nb_non_pos >= m_neg
+
+    assert  m <= net.number_of_arcs() <= m+n-1
+    nb_non_pos = sum(1 for u, v, w in net.arcs() if w <= 0)
+    m_neg = nb_neg_arcs(n, d, r)
+    assert nb_non_pos >= m_neg

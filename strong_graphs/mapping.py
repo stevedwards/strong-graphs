@@ -1,14 +1,12 @@
 import copy
+from collections import defaultdict
 import random
 from strong_graphs.utils import determine_order
 from strong_graphs.data_structure import Network
+from strong_graphs.negative import nb_neg_loop_arcs
 
 __all__ = ["map_distances", "map_graph", "mapping_required"]
 
-
-def count_left_arcs(order):
-    n = len(order)
-    return sum(1 for u in range(n) if order[u] > order[(u + 1) % n])
 
 
 def correct_node_position(order, positions, new_position_j):
@@ -40,8 +38,8 @@ def reorder_nodes(order, x):
     If arrows are drawn between consecutive numbers, i.e., 0->1, 1->2, 2->3,..., (n-1)->0, 
     x is the number of times the arrow faces from right ro left (<-) with respect to the order
     """
-    assert x > count_left_arcs(order)
-    assert x < len(order), "Must have at least one non-negative-arc"
+    #assert x > count_left_arcs(order)
+    #assert x < len(order), "Must have at least one non-negative-arc"
     new_order = copy.copy(order)
     positions = {node: pos for pos, node in enumerate(new_order)}
     sample = random.sample(range(len(order)), x + 1)
@@ -56,18 +54,34 @@ def create_mapping(order, m_neg):
     mapping = {old: new for old, new in zip(order, new_order)}
     return mapping
 
+def current_zero_loop_arcs(n, arcs):
+    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w == 0)
 
-def mapping_required(distances, tree_arcs, m, nb_neg_loop_arcs):
+def current_neg_loop_arcs(n, arcs):
+    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w < 0)
+
+def count_non_positive_loop_arcs(distances):
+    n = len(distances)
+    x = sum(1 for u in range(n) if distances[u] >= distances[(u + 1) % n])
+    return x
+
+def determine_nodes_by_distance(distances):
+    nodes_by_distance = defaultdict(set)
+    for node, distance in distances.items():
+        nodes_by_distance[distance].add(node)
+    return nodes_by_distance
+
+def mapping_required(distances, nb_neg_loop_arcs):
     if nb_neg_loop_arcs == 0:
         return None
     order = determine_order(distances)
     n = len(order)
     assert 0 <= nb_neg_loop_arcs < n, "Must have at least one non-negative-arc"
     assert n == len(set(order)), "No duplicates allowed"
-    number_of_left_arcs = count_left_arcs(order)
+    x = count_non_positive_loop_arcs(distances)
     return (
         create_mapping(order, nb_neg_loop_arcs)
-        if nb_neg_loop_arcs > number_of_left_arcs
+        if nb_neg_loop_arcs > x
         else None
     )
 
