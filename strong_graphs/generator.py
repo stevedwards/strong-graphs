@@ -50,6 +50,13 @@ def arc_weight_remaining(ξ, D, δ, is_negative):
         return x
 
 
+def current_zero_loop_arcs(n, arcs):
+    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w == 0)
+
+def current_neg_loop_arcs(n, arcs):
+    return sum(1 for u, v, w in arcs() if v == (u + 1) % n and w < 0)
+
+
 def build_instance(ξ, n, m, r, D):
     """The graph generation algorithm."""
     assert n <= m <= n * (n - 1), f"invalid number of arcs {m=}"
@@ -65,15 +72,16 @@ def build_instance(ξ, n, m, r, D):
         network.add_arc(u, v, w)
     distances = shortest_path(network)
     # Determine the number of negative loop arcs
-    m_neg_tree_loop = sum(1 for u, v in tree_arcs if v == (u + 1) % n and w <= 0)
+    m_neg_tree_loop = current_neg_loop_arcs(n, network.arcs)
     m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
-    if (mapping := mapping_required(distances, m_neg_loop)) :
+    if (mapping := mapping_required(distances, tree_arcs, m, m_neg_loop)) :
         tree_arcs = set((mapping[u], mapping[v]) for (u, v) in tree_arcs)
         network = map_graph(network, mapping)
         distances = map_distances(distances, mapping)
+        m_neg_loop = min(m_neg_tree, current_neg_loop_arcs(n, network.arcs))
     # Add the remaining arcs - first the loop arcs then the remaining arcs
     for (u, v, is_negative) in itertools.chain(
-        gen_loop_arcs(ξ, network, distances, m_neg_loop),
+        gen_loop_arcs(ξ, network, distances, m_neg_loop - m_neg_tree_loop),
         gen_remaining_arcs(ξ, network, distances, n, m, m_neg),
     ):
         δ = distances[v] - distances[u]
@@ -84,14 +92,12 @@ def build_instance(ξ, n, m, r, D):
 
 
 if __name__ == "__main__":
-
-    ξ = random.Random(0)
-    n = 20  # Number of nodes
-    d = 0.5  # Density
-    r = 1  # Ratio of negative arcs
-    D = partial(random.Random.randint, a=-1000, b=1000)
+    ξ = random.Random(1)
+    n = 4  # Number of nodes
+    d = 0.0  # Density
+    r = 0  # Ratio of negative arcs
+    D = partial(random.Random.randint, a=0, b=0)
     m = nb_arcs_from_density(n, d)
-    network, tree_arcs, distances, source = build_instance(
-        ξ, n=n, m=m, r=r, D=D,
-    )
+
+    network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D,)
     draw_graph(network, tree_arcs, distances)

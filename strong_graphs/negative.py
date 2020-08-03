@@ -24,6 +24,7 @@ def determine_alpha_beta(μ, control=100.0):
     μ = α / (α + β) => β = α(1 - μ) / μ or α = β.μ/(1-μ)
     """
     assert 0 <= μ <= 1, f"Mean must be valid {μ=}"
+    μ = nextafter(μ, 0.5)
     if μ > 0.5:
         α = control
         β = α * (1 - μ) / μ
@@ -37,18 +38,19 @@ def sample_number(ξ, min_value, max_value, expected) -> int:
     """Infers a beta distribution with given parameters """
     assert max_value >= expected >= min_value
     if max_value - min_value == 0:
-        return max_value
+        return round(max_value)
     else:
         μ = (expected - min_value) / (max_value - min_value)
         μ = nextafter(μ, 0.5)
         α, β = determine_alpha_beta(float(μ))
         x = ξ.betavariate(α, β)
-        return round(min_value + x * (max_value - min_value))
+        return int(round(min_value + x * (max_value - min_value)))
 
 
 def nb_neg_arcs(n, m, r):
     """ The total number of negative arcs is decided by the ratio
     but capped at the number corresponding to a complete DAG"""
+    assert n >= 2
     m_dag = nb_arcs_in_complete_dag(n)
     return min(round(r * (m-1)), m_dag)
 
@@ -67,8 +69,8 @@ def nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop):
     remaining_neg = m_neg - m_neg_tree
     ratio = remaining_neg / remaining_arcs
     min_value = max(m_neg_tree_loop, m_neg - nb_arcs_in_complete_dag(n-1))
-    expected = max(ratio * (n - 1), min_value)
     max_value = min(n - 1, m_neg)
+    expected = max(min(max_value, ratio * (n - 1)), min_value)
     x = sample_number(ξ, min_value, max_value, expected)
     return x
 
@@ -76,7 +78,8 @@ def nb_neg_remaining(network, m_neg):
     """Note here the <= is deliberate as some negative arcs might be forced to 0
     given pre-existing distributions. 
     """ 
-    return m_neg - sum(1 for u,v,w in network.arcs() if w <= 0)
+    existing_negative_arcs = sum(1 for u,v,w in network.arcs() if w < 0)
+    return m_neg - existing_negative_arcs
 
 
 if __name__ == "__main__":

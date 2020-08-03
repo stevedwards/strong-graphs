@@ -57,7 +57,7 @@ def create_mapping(order, m_neg):
     return mapping
 
 
-def mapping_required(distances, nb_neg_loop_arcs):
+def mapping_required(distances, tree_arcs, m, nb_neg_loop_arcs):
     if nb_neg_loop_arcs == 0:
         return None
     order = determine_order(distances)

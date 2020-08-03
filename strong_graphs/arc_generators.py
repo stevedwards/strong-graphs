@@ -14,7 +14,7 @@ def gen_tree_arcs(ξ, n, m, m_neg):
     nb_loop_arcs = max(0, 2 * n - 1 - m)
     loop_arc_predecessors = set(ξ.sample(range(n - 1), nb_loop_arcs))
     tree_nodes = set([0])
-    bar = Bar("tree arcs (>=)", max=m_neg)
+    bar = Bar("tree arcs", max=n-1)
 
     def dive(u):
         """Add loop arcs to tree where possible"""
@@ -33,7 +33,7 @@ def gen_tree_arcs(ξ, n, m, m_neg):
         parentless.remove(v)
         bar.next()
         yield (0, v)
-        dive(v)
+        yield from dive(v)
     else:
         yield from dive(0)
     # Remaining nodes must have exactly one parent, choose from nodes in tree.
@@ -50,21 +50,21 @@ def gen_tree_arcs(ξ, n, m, m_neg):
 
 
 # ----------------------------------------------------------
-def gen_loop_arcs(ξ, graph, distances, number_of_negative_arcs):
+def gen_loop_arcs(ξ, graph, distances, nb_neg_loop_arcs_remaining):
     n = graph.number_of_nodes()
 
     def determine_if_negative(u, v):
-        return distances[u] > distances[v] and number_of_negative_arcs > 0
+        return distances[u] > distances[v] and nb_neg_loop_arcs_remaining > 0
 
     order = list(range(n))
     ξ.shuffle(order)
     bar = Bar("loop arcs", max=n)
     for u in range(n):
         v = (u + 1) % n
-        is_negative = determine_if_negative(u, v)
-        if is_negative:
-            number_of_negative_arcs -= 1
         if (u, v) not in graph._arcs.keys():
+            is_negative = determine_if_negative(u, v)
+            if is_negative:
+                nb_neg_loop_arcs_remaining -= 1
             bar.next()
             yield (u, v, is_negative)
     bar.finish()
@@ -109,20 +109,23 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 
 
 def gen_remaining_arcs(
-    ξ, graph, distances, n, m, m_neg,
+    ξ, graph, distances, n, m, m_neg_total,
 ):
     m_remaining = m - graph.number_of_arcs()
-    m_neg = nb_neg_remaining(graph, m_neg)
-    m_pos = m_remaining - m_neg
+    assert m_remaining >= 0
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
     negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())
+    m_neg = min(nb_neg_remaining(graph, m_neg_total), m_remaining, negative_arc_vacancies)
+    m_pos = m_remaining - m_neg
     total_capacity = negative_arc_vacancies + sum(
         q for q in arc_vacancies["->"].values()
     )
-    assert negative_arc_vacancies >= m_neg, ""
+    assert negative_arc_vacancies >= m_neg
     assert total_capacity >= m_pos + m_neg, ""
     allocation = allocate_predecessors_to_nodes(ξ, graph, arc_vacancies, m_pos, m_neg)
+    total = sum(q for x in allocation.values() for q in x.values())
+    assert total == m_remaining
     # Generate predecessors
     def generate_arcs(sample_range, q, threshold=0, shuffle=False):
         """Can be used for both for both <- and -> arcs"""
@@ -139,10 +142,11 @@ def gen_remaining_arcs(
                 bar.next()
                 yield u, v, is_negative
 
-    bar = Bar("remaining arcs", max=m_remaining)
+    bar = Bar("remaining arcs", max=max(m_remaining, 1))
     for pos, v in enumerate(order):
+        total_allocation = allocation[">="][v] + allocation["<="][v]
         low_int = max(0, allocation[">="][v] - arc_vacancies["->"][v])
-        high_int = min(m_pos, arc_vacancies["<-"][v] - allocation["<="][v])
+        high_int = min(allocation[">="][v], arc_vacancies["<-"][v] - allocation["<="][v])
         nb_pos_to_the_left = ξ.randint(
             a=low_int,
             b=high_int,
@@ -150,6 +154,9 @@ def gen_remaining_arcs(
         assert nb_pos_to_the_left >= 0, f"{nb_pos_to_the_left=}"
         nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
         nb_to_the_right = allocation[">="][v] - nb_pos_to_the_left
+        assert nb_to_the_left + nb_to_the_right == total_allocation
+        assert nb_to_the_left >= 0
+        assert nb_to_the_right>= 0
         # Generate to the left <-
         if nb_to_the_left > 0:
             yield from generate_arcs(

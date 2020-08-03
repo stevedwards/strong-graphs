@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.animation import FuncAnimation, PillowWriter
 from strong_graphs.generator import build_instance
-from strong_graphs.draw import curved_arcs, circle_layout
+from strong_graphs.visualise.draw import curved_arcs, circle_layout
+from strong_graphs.utils import nb_arcs_from_density
 import random
 from functools import partial
 import itertools
@@ -174,9 +175,10 @@ def animate(network, tree_arcs, distances, mapping):
 
 if __name__ == "__main__":
     ξ = random.Random(0)
-    n = 10  # Number of nodes
-    d = 1  # Density
+    n = 15  # Number of nodes
+    d = 0.5  # Density
     r = 1  # Ratio of negative arcs
+    m = nb_arcs_from_density(n, d)
     print("Building graph")
     network, tree_arcs, distances, mapping = build_instance(
         ξ,

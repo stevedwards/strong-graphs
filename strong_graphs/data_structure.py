@@ -57,6 +57,7 @@ class Network:
         yield from self._successors[node_id]
 
 
+
 def to_networkx(graph):
     """For drawing purposes I just convert my graph to networkx"""
     n = nx.DiGraph()
