@@ -116,7 +116,7 @@ def gen_remaining_arcs(
     order = determine_order(distances)
     arc_vacancies = determine_predecessor_vacancies(graph, order)
     negative_arc_vacancies = sum(q for q in arc_vacancies["<-"].values())
-    m_neg = min(nb_neg_remaining(graph, m_neg_total), m_remaining, negative_arc_vacancies)
+    m_neg = max(min(nb_neg_remaining(graph, m_neg_total), m_remaining, negative_arc_vacancies),0)
     m_pos = m_remaining - m_neg
     total_capacity = negative_arc_vacancies + sum(
         q for q in arc_vacancies["->"].values()

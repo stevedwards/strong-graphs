@@ -93,10 +93,10 @@ def build_instance(ξ, n, m, r, D):
 
 if __name__ == "__main__":
     ξ = random.Random(1)
-    n = 6  # Number of nodes
-    d = 0.08972473588516851  # Density
-    r = 0.5000000000000001  # Ratio of negative arcs
-    D = partial(random.Random.randint, a=-1, b=1)
+    n = 39  # Number of nodes
+    d = 0.0010956253986627031  # Density
+    r = 0.1375000000000002  # Ratio of negative arcs
+    D = partial(random.Random.randint, a=-11, b=31)
     m = nb_arcs_from_density(n, d)
 
     network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D,)

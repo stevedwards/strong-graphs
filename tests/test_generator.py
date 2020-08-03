@@ -3,9 +3,10 @@ from functools import partial
 import pytest
 from strong_graphs.generator import build_instance
 from strong_graphs.negative import nb_neg_arcs
-from strong_graphs.utils import nb_arcs_from_density
+from strong_graphs.utils import nb_arcs_from_density, bellman_ford
 from hypothesis import given
 import hypothesis.strategies as st
+from collections import defaultdict
 
 @pytest.mark.parametrize(
     "n, d, r, D_", [(20, 0.25, 0.5, (-100, 100)), (20, 0.25, 0.5, (-100, 100))]
@@ -43,10 +44,13 @@ def test_seed_consistency(n, d, r, D_):
 def test_generator(n, d, r, D_min, D_max):
     m = nb_arcs_from_density(n, d)
     D = partial(random.Random.randint, a=-D_min, b=D_max)
-    ξ = random.Random(1)
-    net, tree1, dist1, map1 = build_instance(ξ, n, m, r, D)
-
+    x = random.randint(0, 10)
+    print(x)
+    ξ = random.Random(x)
+    net, _, dist1, map1 = build_instance(ξ, n, m, r, D)
     assert  m <= net.number_of_arcs() <= m+n-1
     nb_non_pos = sum(1 for u, v, w in net.arcs() if w <= 0)
     m_neg = nb_neg_arcs(n, d, r)
     assert nb_non_pos >= m_neg
+    true_distances = bellman_ford(net, map1[0] if map1 else 0)
+    assert true_distances == dist1

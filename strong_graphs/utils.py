@@ -56,3 +56,18 @@ def distribute(
         if allocation[select_node] == capacity[select_node]:
             choices.remove(select_node)
     return allocation
+
+
+def bellman_ford(graph, source):
+    distances = defaultdict(lambda: float("inf"))
+    distances[source] = 0
+    queue = set([source])
+    while queue:
+        new_queue = set()
+        for u in queue:
+            for v, w in graph.successors(u):
+                if distances[u] + w < distances[v]:
+                    distances[v] = distances[u] + w
+                    new_queue.add(v)
+        queue = new_queue
+    return distances

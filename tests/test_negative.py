@@ -12,6 +12,7 @@ from strong_graphs.negative import (
     nb_neg_loop_arcs,
 )
 
+max_int = 10000
 
 @given(st.floats(min_value=0, max_value=1))
 def test_determine_alpha_beta(μ):
@@ -21,7 +22,7 @@ def test_determine_alpha_beta(μ):
 
 
 @given(
-    st.tuples(st.integers(max_value=900719925474), st.integers(max_value=900719925474))
+    st.tuples(st.integers(max_value=max_int), st.integers(max_value=max_int))
 )
 def test_sample_number(two_ints):
     min_value, max_value = min(two_ints), max(two_ints)
@@ -33,7 +34,7 @@ def test_sample_number(two_ints):
 
 
 @given(
-    st.integers(min_value=2, max_value=10000000), st.floats(min_value=0, max_value=1)
+    st.integers(min_value=2, max_value=max_int), st.floats(min_value=0, max_value=1)
 )
 def test_nb_neg_arcs(n, r):
     ξ = random.Random(1)
