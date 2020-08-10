@@ -2,53 +2,77 @@ import random
 import math
 from functools import partial
 import click
-from strong_graphs.generator import distribute, build_instance
-from strong_graphs.draw import draw_graph
+from strong_graphs.generator import build_instance
 from strong_graphs.output import output
 from strong_graphs.utils import nb_arcs_from_density
 
 # Command line information
 @click.command()
 @click.argument("n", type=int)
-@click.option("-d", type=float, default=0.5, help="Density, d∈[0,...,1] (1)")
-@click.option('-s', type=float, default=0, help="Random seed (0)")
+@click.option("-d", type=float, default=0.1, help="Density, d∈[0,...,1] (1)")
+@click.option('-r', type=float, default=0.25, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
 @click.option('-m', type=int, default=None, help="Number of arcs override (None)")
-@click.option('-x1', type=(float, float), default=(-100, 100), help="Optimal tree distribution bounds (-100, 100)")
-@click.option('-x2', type=(float, float), default=(0, 100), help="Remaining arc distribution bounds (0, 100)")
-@click.option('-r', type=float, default=1, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
-@click.option('-ensure_non_neg', type=bool, default=False, help="Ensure remaining arc weights are non-negative (False)")
-
-
-def generate(n, d, s, m, x1, x2, r, ensure_non_neg):
+@click.option('-lb', type=int, default=-1000, help="Lower bound to distribution")
+@click.option('-ub', type=int, default=1000, help="Upper bound to distribution")
+@click.option('-s', type=float, default=0, help="Random seed (0)")
+@click.option('-is_integer', type=bool, default=True, help="Boolean to indicate if arc weights are integer or floats (True)")
+def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
     assert 0 <= d <= 1, f"Density {d} must be between 0 and 1"
-    assert r is None or 0 <= r <= 1, f"Proportion of negative remaining arcs between 0 and 1, {r=}"
-    assert x2[0] >= 0, f"Remaining arc distribution must be non-negative, given {x2=}"
+    assert 0 <= r <= 1, f"Proportion of negative remaining arcs between 0 and 1, {r=}"
+    assert lb <= 0, f"Lower bound of arc distribution must be non-positive, {lb=}"
+    assert ub >= 0, f"Upper bound of arc distribution must be non-negative,  {ub=}"
     if m is None:
         m = nb_arcs_from_density(n, d)
-    else:
+    elif verbose:
         print(f"Density value {d=} is being overriden by {m=}")
     #m_neg = min(r * (m-1), (n)*(n-1)/2)
     # Print parameter information
-    print(f"""
-    Generating a strong graph (💪) with the following parameters
-    - Number of nodes, {n=}
-    - Number of arcs, {m=}
-    - Tree distribution parameters, {x1=}
-    - Other distribution parameters, {x2=}
-    - Random seed, {s=}
-    - Ensuring other arcs are non-neg, {ensure_non_neg=}
-    """)
+    if verbose:
+        print(f"""
+        Generating a strong graph (💪) with the following parameters
+        - Number of nodes, {n=}
+        - Density, {d=}
+        - Negative arc ratio, {r=}
+        - Number of arcs, {m=}
+        - Distribution, [{lb=}, {ub=}]
+        - Random seed, {s=}
+        - Integer arc weights, {is_integer=}
+        """)
     ξ = random.Random(s)
-    network, tree, distances = build_instance(
+    D = partial(random.Random.randint if is_integer else random.Random.uniform, a=lb, b=ub)
+    network, _, distances, _ = build_instance(
         ξ,
         n,
         m,
         r,
-        D_tree=partial(random.Random.randint, a=x1[0], b=x1[1]),
-        D_remaining=partial(random.Random.randint, a=x2[0], b=x2[1]),
+        D
     )
-    draw_graph(network, tree, distances)
     sum_of_distances = sum(distances.values())
-    #output(network, sum_of_distances)
+    output(ξ, network, sum_of_distances, r)
 
-generate()  # pylint: disable=no-value-for-parameter
+
+
+# Command line information
+@click.command()
+@click.argument("n", type=int)
+@click.argument("s", type=int)
+def generate_from_distribution(n, s):
+    ξ = random.Random(s)
+    d = ξ.random()
+    r = ξ.random()
+    lb = ξ.randint(-1000, 0)
+    ub = ξ.randint(0, 1000)
+    ξ = random.Random(s)
+    m = nb_arcs_from_density(n, d)
+    D = partial(random.Random.randint, a=lb, b=ub)
+    network, _, distances, _ = build_instance(
+        ξ,
+        n,
+        m,
+        r,
+        D
+    )
+    sum_of_distances = sum(distances.values())
+    output(ξ, network, sum_of_distances, d, r, s, lb, ub)
+
+generate_from_distribution()  # pylint: disable=no-value-for-parameter

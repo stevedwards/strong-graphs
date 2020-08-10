@@ -3,7 +3,6 @@ from collections import defaultdict
 import random
 from strong_graphs.utils import determine_order
 from strong_graphs.data_structure import Network
-from strong_graphs.negative import nb_neg_loop_arcs
 
 __all__ = ["map_distances", "map_graph", "mapping_required"]
 

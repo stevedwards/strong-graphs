@@ -3,54 +3,52 @@ from collections import defaultdict, OrderedDict
 from strong_graphs.utils import distribute, determine_order
 from strong_graphs.negative import nb_neg_remaining
 from typing import Dict, Hashable, List
+from tqdm import tqdm
 from progress.bar import Bar
 
 __all__ = ["gen_tree_arcs", "gen_loop_arcs", "gen_remaining_arcs"]
 
 
-def gen_tree_arcs(ξ, n, m, m_neg):
+def gen_tree_arcs(ξ, n, m, m_neg, quiet=False):
     assert m > n - 1, "Number of arcs must be able to form a tree"
     # Sample the minimum required loop arcs
     nb_loop_arcs = max(0, 2 * n - 1 - m)
     loop_arc_predecessors = set(ξ.sample(range(n - 1), nb_loop_arcs))
     tree_nodes = set([0])
-    bar = Bar("tree arcs", max=n-1)
-
-    def dive(u):
-        """Add loop arcs to tree where possible"""
-        while u in loop_arc_predecessors:
-            tree_nodes.add(u + 1)
-            bar.next()
-            yield (u, u + 1)
-            u += 1
-
-    # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
-    # loop arcs as they will be added by diving when the predecessor is added.
-    parentless = set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
-    # Source node must have at least one child, choose from parentless nodes
-    if 0 not in loop_arc_predecessors:
-        v = ξ.choice(list(parentless))
-        parentless.remove(v)
-        bar.next()
-        yield (0, v)
-        yield from dive(v)
-    else:
-        yield from dive(0)
-    # Remaining nodes must have exactly one parent, choose from nodes in tree.
-    parentless = list(parentless)
-    ξ.shuffle(parentless)
-    for v in parentless:
-        tree_nodes_list = list(tree_nodes)
-        u = ξ.choice(tree_nodes_list)
-        tree_nodes.add(v)
-        bar.next()
-        yield (u, v)
-        yield from dive(v)
-    bar.finish()
+    with tqdm(total=n-1, disable=quiet, desc="Tree arcs") as bar:
+        def dive(u):
+            """Add loop arcs to tree where possible"""
+            while u in loop_arc_predecessors:
+                tree_nodes.add(u + 1)
+                bar.update()
+                yield (u, u + 1)
+                u += 1
+        # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
+        # loop arcs as they will be added by diving when the predecessor is added.
+        parentless = set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
+        # Source node must have at least one child, choose from parentless nodes
+        if 0 not in loop_arc_predecessors:
+            v = ξ.choice(list(parentless))
+            parentless.remove(v)
+            bar.update()
+            yield (0, v)
+            yield from dive(v)
+        else:
+            yield from dive(0)
+        # Remaining nodes must have exactly one parent, choose from nodes in tree.
+        parentless = list(parentless)
+        ξ.shuffle(parentless)
+        for v in parentless:
+            tree_nodes_list = list(tree_nodes)
+            u = ξ.choice(tree_nodes_list)
+            tree_nodes.add(v)
+            bar.update()
+            yield (u, v)
+            yield from dive(v)
 
 
 # ----------------------------------------------------------
-def gen_loop_arcs(ξ, graph, distances, nb_neg_loop_arcs_remaining):
+def gen_loop_arcs(ξ, graph, distances, nb_neg_loop_arcs_remaining, quiet=False):
     n = graph.number_of_nodes()
 
     def determine_if_negative(u, v):
@@ -58,20 +56,19 @@ def gen_loop_arcs(ξ, graph, distances, nb_neg_loop_arcs_remaining):
 
     order = list(range(n))
     ξ.shuffle(order)
-    bar = Bar("loop arcs", max=n)
-    for u in range(n):
-        v = (u + 1) % n
-        if (u, v) not in graph._arcs.keys():
-            is_negative = determine_if_negative(u, v)
-            if is_negative:
-                nb_neg_loop_arcs_remaining -= 1
-            bar.next()
-            yield (u, v, is_negative)
-    bar.finish()
+    with tqdm(total=n, disable=quiet, desc="Loop Arcs") as bar:
+        for u in range(n):
+            v = (u + 1) % n
+            if (u, v) not in graph._arcs.keys():
+                is_negative = determine_if_negative(u, v)
+                if is_negative:
+                    nb_neg_loop_arcs_remaining -= 1
+                bar.update()
+                yield (u, v, is_negative)
 
 
 # -----------------------------------------------------------
-def determine_predecessor_vacancies(graph, order):
+def determine_predecessor_vacancies(graph, order, quiet=False):
     """    
     A vacancy represents the lack of an inward arc to a node
     from a given predecessor.
@@ -85,12 +82,14 @@ def determine_predecessor_vacancies(graph, order):
         "<-": {i: n - 1 - pos[i] for i in range(n)},
         "->": {i: pos[i] for i in range(n)},
     }
-    for v in range(n):
-        for u, _ in graph.predecessors(v):
-            if pos[v] < pos[u]:
-                vacancies["<-"][v] -= 1
-            else:
-                vacancies["->"][v] -= 1
+    with tqdm(total=n, disable=quiet, desc="Allocation") as bar:
+        for v in range(n):
+            bar.update()
+            for u, _ in graph.predecessors(v):
+                if pos[v] < pos[u]:
+                    vacancies["<-"][v] -= 1
+                else:
+                    vacancies["->"][v] -= 1
     return vacancies
 
 
@@ -109,7 +108,7 @@ def allocate_predecessors_to_nodes(ξ, graph, vacancies, m_pos, m_neg):
 
 
 def gen_remaining_arcs(
-    ξ, graph, distances, n, m, m_neg_total,
+    ξ, graph, distances, n, m, m_neg_total, quiet=False
 ):
     m_remaining = max(0, m - graph.number_of_arcs())
     #assert m_remaining >= 0
@@ -139,34 +138,32 @@ def gen_remaining_arcs(
             if (u, v) not in graph._arcs:
                 is_negative = count < threshold
                 count += 1
-                bar.next()
+                bar.update()
                 yield u, v, is_negative
 
-    bar = Bar("remaining arcs", max=max(m_remaining, 1))
-    for pos, v in enumerate(order):
-        total_allocation = allocation[">="][v] + allocation["<="][v]
-        low_int = max(0, allocation[">="][v] - arc_vacancies["->"][v])
-        high_int = min(allocation[">="][v], arc_vacancies["<-"][v] - allocation["<="][v])
-        nb_pos_to_the_left = ξ.randint(
-            a=low_int,
-            b=high_int,
-        )
-        assert nb_pos_to_the_left >= 0, f"{nb_pos_to_the_left=}"
-        nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
-        nb_to_the_right = allocation[">="][v] - nb_pos_to_the_left
-        assert nb_to_the_left + nb_to_the_right == total_allocation
-        assert nb_to_the_left >= 0
-        assert nb_to_the_right>= 0
-        # Generate to the left <-
-        if nb_to_the_left > 0:
-            yield from generate_arcs(
-                sample_range=range(pos + 1, n),
-                q=nb_to_the_left,
-                threshold=allocation["<="][v],
-                shuffle=True,
+    with tqdm(total=max(m_remaining, 1), disable=quiet, desc="Remaining") as bar:
+        for pos, v in enumerate(order):
+            total_allocation = allocation[">="][v] + allocation["<="][v]
+            low_int = max(0, allocation[">="][v] - arc_vacancies["->"][v])
+            high_int = min(allocation[">="][v], arc_vacancies["<-"][v] - allocation["<="][v])
+            nb_pos_to_the_left = ξ.randint(
+                a=low_int,
+                b=high_int,
             )
-        # Generate to the right ->
-        if nb_to_the_right > 0:
-            yield from generate_arcs(sample_range=range(pos), q=nb_to_the_right)
-
-    bar.finish()
+            assert nb_pos_to_the_left >= 0, f"{nb_pos_to_the_left=}"
+            nb_to_the_left = allocation["<="][v] + nb_pos_to_the_left
+            nb_to_the_right = allocation[">="][v] - nb_pos_to_the_left
+            assert nb_to_the_left + nb_to_the_right == total_allocation
+            assert nb_to_the_left >= 0
+            assert nb_to_the_right>= 0
+            # Generate to the left <-
+            if nb_to_the_left > 0:
+                yield from generate_arcs(
+                    sample_range=range(pos + 1, n),
+                    q=nb_to_the_left,
+                    threshold=allocation["<="][v],
+                    shuffle=True,
+                )
+            # Generate to the right ->
+            if nb_to_the_right > 0:
+                yield from generate_arcs(sample_range=range(pos), q=nb_to_the_right)

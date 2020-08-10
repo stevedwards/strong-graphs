@@ -3,7 +3,8 @@ import statistics
 from collections import defaultdict
 from typing import Hashable, Dict, List, Tuple
 import random
-
+from ordered_set import OrderedSet
+import tqdm
 
 def nb_arcs_from_density(n: int, d: int) -> int:
     """
@@ -45,16 +46,20 @@ def distribute(
     ξ, capacity: Dict[Hashable, int], quantity: int
 ) -> Dict[Hashable, int]:
     """A method to distribute a quantity amongst choices with given capacities"""
-    assert (
-        total_capacity := sum(capacity.values())
-    ) >= quantity, f"{quantity=} exceeds {total_capacity=}"
-    choices = set(key for key, value in capacity.items() if value >= 1)
+    total_capacity = sum(capacity.values())
+    assert total_capacity >= quantity, f"{quantity=} exceeds {total_capacity=}"
+    choices = [key for key, value in capacity.items() if value >= 1]
+    ξ.shuffle(choices)
+    choices = OrderedSet(choices)
     allocation = defaultdict(int)
-    for _ in range(quantity):
-        select_node = ξ.choice(list(choices))
-        allocation[select_node] += 1
-        if allocation[select_node] == capacity[select_node]:
-            choices.remove(select_node)
+    with tqdm.tqdm(total=quantity, desc="Distribute") as bar:
+        for _ in range(quantity):
+            bar.update()
+            select_pos = ξ.randint(0, len(choices)-1)
+            select_node = choices[select_pos]
+            allocation[select_node] += 1
+            if allocation[select_node] == capacity[select_node]:
+                choices.remove(select_node)
     return allocation
 
 

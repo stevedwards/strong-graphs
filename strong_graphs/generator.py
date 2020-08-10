@@ -1,14 +1,11 @@
 import itertools
-import math
 import random
 from functools import partial
-from collections import defaultdict
 from strong_graphs.data_structure import Network
 from strong_graphs.negative import (
     nb_neg_arcs,
     nb_neg_loop_arcs,
     nb_neg_tree_arcs,
-    nb_neg_remaining,
 )
 from strong_graphs.arc_generators import (
     gen_tree_arcs,
@@ -24,7 +21,6 @@ from strong_graphs.visualise.draw import draw_graph
 from strong_graphs.utils import (
     nb_arcs_from_density,
     shortest_path,
-    nb_arcs_in_complete_dag,
 )
 
 __all__ = ["build_instance"]
@@ -92,12 +88,12 @@ def build_instance(ξ, n, m, r, D):
 
 
 if __name__ == "__main__":
-    ξ = random.Random(1)
-    n = 39  # Number of nodes
-    d = 0.0010956253986627031  # Density
-    r = 0.1375000000000002  # Ratio of negative arcs
-    D = partial(random.Random.randint, a=-11, b=31)
+    ξ = random.Random(0)
+    n = 10000  # Number of nodes
+    d = 0.1  # Density
+    r = 0.25  # Ratio of negative arcs
+    D = partial(random.Random.randint, a=-100, b=100)
+    #m = 1000000
     m = nb_arcs_from_density(n, d)
-
-    network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D,)
-    draw_graph(network, tree_arcs, distances)
+    network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D)
+    #draw_graph(network, tree_arcs, distances)
