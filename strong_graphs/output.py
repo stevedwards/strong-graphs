@@ -10,7 +10,6 @@ def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, shuffle=True, output_di
     
     Note that the node ordering is indexed from 1 not 0 so our nodes must be increased.
     """
-    
     n = graph.number_of_nodes()
     m = graph.number_of_arcs()
     arc_weights = [w for _, _, w in graph.arcs()]
