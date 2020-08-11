@@ -1,6 +1,5 @@
 import copy
 from collections import defaultdict
-import random
 from strong_graphs.utils import determine_order
 from strong_graphs.data_structure import Network
 
@@ -31,7 +30,7 @@ def correct_node_position(order, positions, new_position_j):
     return order, positions
 
 
-def reorder_nodes(order, x):
+def reorder_nodes(ξ, order, x):
     """
     order = some_shuffle([0, 1, 2, 3, 4,..., n-1])
     If arrows are drawn between consecutive numbers, i.e., 0->1, 1->2, 2->3,..., (n-1)->0, 
@@ -41,15 +40,15 @@ def reorder_nodes(order, x):
     #assert x < len(order), "Must have at least one non-negative-arc"
     new_order = copy.copy(order)
     positions = {node: pos for pos, node in enumerate(new_order)}
-    sample = random.sample(range(len(order)), x + 1)
+    sample = ξ.sample(range(len(order)), x + 1)
     for s in sample:
         q = positions[s]
         new_order, positions = correct_node_position(new_order, positions, q)
     return new_order
 
 
-def create_mapping(order, m_neg):
-    new_order = reorder_nodes(order, m_neg)
+def create_mapping(ξ, order, m_neg):
+    new_order = reorder_nodes(ξ, order, m_neg)
     mapping = {old: new for old, new in zip(order, new_order)}
     return mapping
 
@@ -70,7 +69,7 @@ def determine_nodes_by_distance(distances):
         nodes_by_distance[distance].add(node)
     return nodes_by_distance
 
-def mapping_required(distances, nb_neg_loop_arcs):
+def mapping_required(ξ, distances, nb_neg_loop_arcs):
     if nb_neg_loop_arcs == 0:
         return None
     order = determine_order(distances)
@@ -79,7 +78,7 @@ def mapping_required(distances, nb_neg_loop_arcs):
     assert n == len(set(order)), "No duplicates allowed"
     x = count_non_positive_loop_arcs(distances)
     return (
-        create_mapping(order, nb_neg_loop_arcs)
+        create_mapping(ξ, order, nb_neg_loop_arcs)
         if nb_neg_loop_arcs > x
         else None
     )

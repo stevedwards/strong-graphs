@@ -12,9 +12,9 @@ from strong_graphs.utils import nb_arcs_from_density
 @click.option("-d", type=float, default=0.1, help="Density, d∈[0,...,1] (1)")
 @click.option('-r', type=float, default=0.25, help="Proporition of negative remaining arcs, (0 ≤ r ≤ 1)")
 @click.option('-m', type=int, default=None, help="Number of arcs override (None)")
-@click.option('-lb', type=int, default=-1000, help="Lower bound to distribution")
-@click.option('-ub', type=int, default=1000, help="Upper bound to distribution")
-@click.option('-s', type=float, default=0, help="Random seed (0)")
+@click.option('-lb', type=int, default=-100000, help="Lower bound to distribution")
+@click.option('-ub', type=int, default=100000, help="Upper bound to distribution")
+@click.option('-s', type=int, default=0, help="Random seed (0)")
 @click.option('-is_integer', type=bool, default=True, help="Boolean to indicate if arc weights are integer or floats (True)")
 def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
     assert 0 <= d <= 1, f"Density {d} must be between 0 and 1"
@@ -25,6 +25,7 @@ def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
         m = nb_arcs_from_density(n, d)
     elif verbose:
         print(f"Density value {d=} is being overriden by {m=}")
+    
     #m_neg = min(r * (m-1), (n)*(n-1)/2)
     # Print parameter information
     if verbose:
@@ -40,7 +41,7 @@ def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
         """)
     ξ = random.Random(s)
     D = partial(random.Random.randint if is_integer else random.Random.uniform, a=lb, b=ub)
-    network, _, distances, _ = build_instance(
+    network, _, distances, _, source = build_instance(
         ξ,
         n,
         m,
@@ -48,7 +49,7 @@ def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
         D
     )
     sum_of_distances = sum(distances.values())
-    output(ξ, network, sum_of_distances, r)
+    output(ξ, network, sum_of_distances, d, r, s, lb, ub, source)
 
 
 
@@ -60,12 +61,13 @@ def generate_from_distribution(n, s):
     ξ = random.Random(s)
     d = ξ.random()
     r = ξ.random()
-    lb = ξ.randint(-1000, 0)
-    ub = ξ.randint(0, 1000)
+    lb = ξ.randint(-10000, 0)
+    ub = ξ.randint(0, 10000)
     ξ = random.Random(s)
     m = nb_arcs_from_density(n, d)
+    #m = 5*n
     D = partial(random.Random.randint, a=lb, b=ub)
-    network, _, distances, _ = build_instance(
+    network, _, distances, _, source = build_instance(
         ξ,
         n,
         m,
@@ -73,6 +75,6 @@ def generate_from_distribution(n, s):
         D
     )
     sum_of_distances = sum(distances.values())
-    output(ξ, network, sum_of_distances, d, r, s, lb, ub)
+    output(ξ, network, sum_of_distances, d, r, s, lb, ub, source)
 
 generate_from_distribution()  # pylint: disable=no-value-for-parameter

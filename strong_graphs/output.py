@@ -3,7 +3,7 @@ import tqdm
 import statistics
 
 
-def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, shuffle=True, output_dir="output/", to_file=True):
+def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, output_dir="output/", to_file=True):
     """
     Converts a graph in `extended DIMACS format' which is what is expected
     by the algorithms in SPLib
@@ -15,7 +15,6 @@ def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, shuffle=True, output_di
     arc_weights = [w for _, _, w in graph.arcs()]
     m_neg = sum(1 for w in arc_weights if w < 0)
     m_zero = sum(1 for w in arc_weights if w == 0)
-    source = 0
     filename = f"strong-graph-{n}-{s}"  # Other input data required
     if shuffle:
         nodes = list(range(n))
@@ -52,8 +51,10 @@ c Mean arc weight {statistics.mean(arc_weights)}
         )
         f.write(f"t strong-graph-{n}-{s}\nc\n")
         f.write(f"p sp {n:10} {m:10}\nc\n")
-        f.write(f"n {1:10}\nc\n")
+        f.write(f"n {mapping[source]+1:10}\nc\n")
         with tqdm.tqdm(total=m, desc="Output") as bar:
-            for u, v, w in graph.arcs():
+            arcs = list(graph.arcs())
+            ξ.shuffle(arcs)
+            for u, v, w in arcs:
                 bar.update()
                 f.write(f"a {mapping[u]+1:10} {mapping[v]+1:10} {w:10}\n")

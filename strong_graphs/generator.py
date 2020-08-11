@@ -61,6 +61,7 @@ def build_instance(ξ, n, m, r, D):
     m_neg = nb_neg_arcs(n, m, r)
     m_neg_tree = nb_neg_tree_arcs(ξ, n, m, m_neg)
     tree_arcs = set()
+    source = 0
     for u, v in gen_tree_arcs(ξ, n, m, m_neg_tree):
         is_negative = network.number_of_arcs() < m_neg_tree
         w = arc_weight_tree(ξ, D, is_negative)
@@ -70,10 +71,12 @@ def build_instance(ξ, n, m, r, D):
     m_neg_tree_loop = min(m_neg_tree, nb_current_non_pos_tree_loop(network))
     m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
     # Determine the number of negative loop arcs
-    if (mapping := mapping_required(distances, m_neg_loop)):
+    if (mapping := mapping_required(ξ, distances, m_neg_loop)):
+        print("Remapping")
         tree_arcs = set((mapping[u], mapping[v]) for (u, v) in tree_arcs)
         network = map_graph(network, mapping)
         distances = map_distances(distances, mapping)
+        source = mapping[source]
         m_neg_loop = min(m_neg_tree, sum(1 for u, v in tree_arcs if v == (u + 1) % n and w <= 0))
     # Add the remaining arcs - first the loop arcs then the remaining arcs
     for (u, v, is_negative) in itertools.chain(
@@ -84,7 +87,7 @@ def build_instance(ξ, n, m, r, D):
         w = arc_weight_remaining(ξ, D, δ, is_negative)
         assert (is_negative and w <= 0) or (not is_negative and w >= 0)
         network.add_arc(u, v, w)
-    return network, tree_arcs, distances, mapping
+    return network, tree_arcs, distances, mapping, source
 
 
 if __name__ == "__main__":

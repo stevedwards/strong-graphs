@@ -2,7 +2,6 @@ import math
 import statistics
 from collections import defaultdict
 from typing import Hashable, Dict, List, Tuple
-import random
 from ordered_set import OrderedSet
 import tqdm
 
