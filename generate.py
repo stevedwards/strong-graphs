@@ -2,7 +2,7 @@ import random
 import math
 from functools import partial
 import click
-from strong_graphs.generator import build_instance
+from strong_graphs.generator import build_instance, determine_n
 from strong_graphs.output import output
 from strong_graphs.utils import nb_arcs_from_density
 
@@ -55,17 +55,19 @@ def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
 
 # Command line information
 @click.command()
-@click.argument("n", type=int)
+@click.argument("m", type=int)
 @click.argument("s", type=int)
-def generate_from_distribution(n, s):
+def generate_from_distribution(m, s):
     ξ = random.Random(s)
     d = ξ.random()
+    n = determine_n(m, d)
     r = ξ.random()
+    #r = 0.001
     lb = ξ.randint(-10000, 0)
     ub = ξ.randint(0, 10000)
-    ξ = random.Random(s)
-    m = nb_arcs_from_density(n, d)
-    #m = 5*n
+    #m = nb_arcs_from_density(n, d)
+    #m = round(1.5*n)
+    print(n, m)
     D = partial(random.Random.randint, a=lb, b=ub)
     network, _, distances, _, source = build_instance(
         ξ,

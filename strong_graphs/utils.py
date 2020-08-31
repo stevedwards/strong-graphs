@@ -4,6 +4,42 @@ from collections import defaultdict
 from typing import Hashable, Dict, List, Tuple
 from ordered_set import OrderedSet
 import tqdm
+from bisect import bisect_left, bisect_right
+
+
+def take_closest(myList, myNumber):
+    """
+    Assumes myList is sorted. Returns closest value to myNumber.
+
+    If two numbers are equally close, return the smallest number.
+    """
+    pos = bisect_left(myList, myNumber)
+    if pos == 0:
+        return myList[0]
+    if pos == len(myList):
+        return myList[-1]
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+       return after
+    else:
+       return before
+
+def find_ge(a, x):
+    "Find leftmost item greater than or equal to x"
+    i = bisect_left(a, x)
+    if i != len(a):
+        return a[i]
+    raise ValueError
+
+
+def find_le(a, x):
+    "Find rightmost value less than or equal to x"
+    i = bisect_right(a, x)
+    if i:
+        return a[i - 1]
+    raise ValueError
+
 
 def nb_arcs_from_density(n: int, d: int) -> int:
     """
@@ -41,28 +77,7 @@ def shortest_path(tree):
     return distances
 
 
-def distribute(
-    ξ, capacity: Dict[Hashable, int], quantity: int
-) -> Dict[Hashable, int]:
-    """A method to distribute a quantity amongst choices with given capacities"""
-    total_capacity = sum(capacity.values())
-    assert total_capacity >= quantity, f"{quantity=} exceeds {total_capacity=}"
-    choices = [key for key, value in capacity.items() if value >= 1]
-    ξ.shuffle(choices)
-    choices = OrderedSet(choices)
-    allocation = defaultdict(int)
-    with tqdm.tqdm(total=quantity, desc="Distribute") as bar:
-        for _ in range(quantity):
-            bar.update()
-            select_pos = ξ.randint(0, len(choices)-1)
-            select_node = choices[select_pos]
-            allocation[select_node] += 1
-            if allocation[select_node] == capacity[select_node]:
-                choices.remove(select_node)
-    return allocation
-
-
-def bellman_ford(graph, source):
+def bellman_ford(graph, source, unit_weight=True):
     distances = defaultdict(lambda: float("inf"))
     distances[source] = 0
     queue = set([source])
@@ -70,6 +85,8 @@ def bellman_ford(graph, source):
         new_queue = set()
         for u in queue:
             for v, w in graph.successors(u):
+                if unit_weight:
+                    w = 1
                 if distances[u] + w < distances[v]:
                     distances[v] = distances[u] + w
                     new_queue.add(v)

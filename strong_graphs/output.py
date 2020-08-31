@@ -1,7 +1,7 @@
 import sys
 import tqdm
 import statistics
-
+from strong_graphs.utils import bellman_ford
 
 def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, output_dir="output/", to_file=True):
     """
@@ -15,7 +15,7 @@ def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, o
     arc_weights = [w for _, _, w in graph.arcs()]
     m_neg = sum(1 for w in arc_weights if w < 0)
     m_zero = sum(1 for w in arc_weights if w == 0)
-    filename = f"strong-graph-{n}-{s}"  # Other input data required
+    filename = f"strong-graph-{m}-{s}"  # Other input data required
     if shuffle:
         nodes = list(range(n))
         ξ.shuffle(nodes)
@@ -23,6 +23,8 @@ def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, o
     else:
         mapping = {i: i for i in range(m)}
 
+    # Feature
+    unit_distances = bellman_ford(graph, source, unit_weight=True)
     with open(output_dir + filename, "w") if to_file else sys.stdout as f:  #
         f.write(
             f"""c Strong graph for shortest paths problem
@@ -31,6 +33,7 @@ c filename: {filename}
 c 
 c Generator Parameters
 c {n=}
+c {m=}
 c {d=}
 c {r=}
 c {s=}
@@ -44,6 +47,7 @@ c Density {m / n**2}
 c Proportion of negative arcs {m_neg}
 c Proportion of zero arcs {m_zero}
 c Number of positive arcs {m - m_neg - m_zero}
+c Max depth {max(unit_distances.values())}
 c Max arc weight {max(arc_weights)}
 c Min arc weight {min(arc_weights)}
 c Mean arc weight {statistics.mean(arc_weights)}

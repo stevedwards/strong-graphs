@@ -1,4 +1,5 @@
 import itertools
+import math
 import random
 from functools import partial
 from strong_graphs.data_structure import Network
@@ -70,7 +71,6 @@ def build_instance(ξ, n, m, r, D):
     distances = shortest_path(network) 
     m_neg_tree_loop = min(m_neg_tree, nb_current_non_pos_tree_loop(network))
     m_neg_loop = nb_neg_loop_arcs(ξ, n, m, m_neg, m_neg_tree, m_neg_tree_loop)
-    # Determine the number of negative loop arcs
     if (mapping := mapping_required(ξ, distances, m_neg_loop)):
         print("Remapping")
         tree_arcs = set((mapping[u], mapping[v]) for (u, v) in tree_arcs)
@@ -90,13 +90,37 @@ def build_instance(ξ, n, m, r, D):
     return network, tree_arcs, distances, mapping, source
 
 
+def determine_n_and_m(x, d):
+    # Determine the number of nodes (n) and arcs (m) from a constant x = (n)(m) and d
+    assert 0 <= d <= 1
+    assert x >= 1
+
+    n = math.floor(x ** (1 / (2 + d)))
+    m = min(x / n, n*(n-1))
+    return round(n), round(m)
+
+def determine_n(m, d):
+    assert m >= 0
+    assert 0 <= d <= 1
+    return math.floor(m ** (1 / (1 + d)))
+
+
+
 if __name__ == "__main__":
+
+    m = 100
     ξ = random.Random(0)
-    n = 10000  # Number of nodes
-    d = 0.1  # Density
-    r = 0.25  # Ratio of negative arcs
-    D = partial(random.Random.randint, a=-100, b=100)
-    #m = 1000000
+    #d = ξ.random()
+    #n, m = determine_n_and_m(x, d)
+    d = 0.2
+    n = determine_n(m, d)
+
+    #r = ξ.random()
+    r = 0.001
+    lb = ξ.randint(-10000, 0)
+    ub = ξ.randint(0, 10000)
+    D = partial(random.Random.randint, a=lb, b=ub)
+
     m = nb_arcs_from_density(n, d)
-    network, tree_arcs, distances, source = build_instance(ξ, n=n, m=m, r=r, D=D)
-    #draw_graph(network, tree_arcs, distances)
+    network, tree_arcs, distances, mapping, source = build_instance(ξ, n=n, m=m, r=r, D=D)
+    draw_graph(network, tree_arcs, distances)
