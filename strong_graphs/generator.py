@@ -112,8 +112,9 @@ if __name__ == "__main__":
     ξ = random.Random(0)
     #d = ξ.random()
     #n, m = determine_n_and_m(x, d)
-    d = 0.2
-    n = determine_n(m, d)
+    d = 0
+    n = 10000 #determine_n(m, d)
+    #m = 10000
 
     #r = ξ.random()
     r = 0.001
@@ -123,4 +124,4 @@ if __name__ == "__main__":
 
     m = nb_arcs_from_density(n, d)
     network, tree_arcs, distances, mapping, source = build_instance(ξ, n=n, m=m, r=r, D=D)
-    draw_graph(network, tree_arcs, distances)
+    #draw_graph(network, tree_arcs, distances)

@@ -29,7 +29,7 @@ def gen_tree_arcs(ξ, n, m, m_neg, α=1, β=1, quiet=False):
 
         # Keep track of nodes without parents in the tree or in the loop arcs. We ignore
         # loop arcs as they will be added by diving when the predecessor is added.
-        parentless = OrderedSet(
+        parentless = SortedSet(
             set(range(1, n)) - set([u + 1 for u in loop_arc_predecessors])
         )
         # Source node must have at least one child, choose from parentless nodes
@@ -115,7 +115,7 @@ def distribute(ξ, capacity: Dict[Hashable, int], quantity: int) -> Dict[Hashabl
     if quantity > 0:
         total_capacity = sum(capacity.values())
         assert total_capacity >= quantity, f"{quantity=} exceeds {total_capacity=}"
-        choices = OrderedSet([key for key, value in capacity.items() if value >= 1])
+        choices = SortedSet([key for key, value in capacity.items() if value >= 1])
         μ = quantity / float(len(capacity))
         with tqdm(total=quantity, desc="Distribute") as bar:
             for i, q in capacity.items():
@@ -192,8 +192,8 @@ def gen_remaining_arcs(ξ, graph, distances, n, m, m_neg_total, quiet=False):
             sample_range.add(u)
 
     with tqdm(total=max(m_remaining, 1), disable=quiet, desc="Remaining") as bar:
-        left_arc_nodes = OrderedSet(list(range(n)))
-        right_arc_nodes = OrderedSet([])
+        left_arc_nodes = SortedSet(list(range(n)))
+        right_arc_nodes = SortedSet([])
         for pos, v in enumerate(order):
             left_arc_nodes.discard(v)
             total_allocation = allocation[">="][v] + allocation["<="][v]
