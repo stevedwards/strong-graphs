@@ -60,6 +60,7 @@ def generate(n, d, r, m, lb, ub, s, is_integer, verbose=False):
 def generate_from_distribution(m, s):
     ξ = random.Random(s)
     d = ξ.random()
+
     n = determine_n(m, d)
     r = ξ.random()
     #r = 0.001
@@ -77,6 +78,6 @@ def generate_from_distribution(m, s):
         D
     )
     sum_of_distances = sum(distances.values())
-    output(ξ, network, sum_of_distances, d, r, s, lb, ub, source)
+    output(ξ, network, sum_of_distances, m, d, r, s, lb, ub, source)
 
 generate_from_distribution()  # pylint: disable=no-value-for-parameter

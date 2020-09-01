@@ -3,7 +3,7 @@ import tqdm
 import statistics
 from strong_graphs.utils import bellman_ford
 
-def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, output_dir="output/", to_file=True):
+def output(ξ, graph, sum_of_distances, target_n_arcs, d, r, s, lb, ub, source, shuffle=True, output_dir="output/", to_file=True):
     """
     Converts a graph in `extended DIMACS format' which is what is expected
     by the algorithms in SPLib
@@ -15,7 +15,7 @@ def output(ξ, graph, sum_of_distances, d, r, s, lb, ub, source, shuffle=True, o
     arc_weights = [w for _, _, w in graph.arcs()]
     m_neg = sum(1 for w in arc_weights if w < 0)
     m_zero = sum(1 for w in arc_weights if w == 0)
-    filename = f"strong-graph-{m}-{s}"  # Other input data required
+    filename = f"strong-graph-{target_n_arcs}-{s}"  # Other input data required
     if shuffle:
         nodes = list(range(n))
         ξ.shuffle(nodes)

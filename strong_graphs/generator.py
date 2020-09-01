@@ -88,8 +88,7 @@ def build_instance(ξ, n, m, r, D):
         assert (is_negative and w <= 0) or (not is_negative and w >= 0)
         network.add_arc(u, v, w)
     return network, tree_arcs, distances, mapping, source
-
-
+ 
 def determine_n_and_m(x, d):
     # Determine the number of nodes (n) and arcs (m) from a constant x = (n)(m) and d
     assert 0 <= d <= 1
@@ -102,7 +101,8 @@ def determine_n_and_m(x, d):
 def determine_n(m, d):
     assert m >= 0
     assert 0 <= d <= 1
-    return math.floor(m ** (1 / (1 + d)))
+
+    return math.ceil(m ** (1 / (1 + d)))
 
 
 
