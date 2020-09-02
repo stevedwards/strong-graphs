@@ -57,7 +57,8 @@ def nb_current_non_pos_tree_loop(network):
 def build_instance(ξ, n, m, r, D):
     """The graph generation algorithm."""
     assert n <= m <= n * (n - 1), f"invalid number of arcs {m=}"
-    network = Network(nodes=range(n))
+
+    network = Network(nodes=range(n+1))
     # Create optimal shortest path tree
     m_neg = nb_neg_arcs(n, m, r)
     m_neg_tree = nb_neg_tree_arcs(ξ, n, m, m_neg)
@@ -104,24 +105,34 @@ def determine_n(m, d):
 
     return math.ceil(m ** (1 / (1 + d)))
 
-
+def change_source_nodes(ξ, network, z):
+    n = network.number_of_nodes()
+    assert 1 <= z <= n
+    network.add_node(-1)
+    source_nodes = ξ.sample(range(n), z)
+    for node in source_nodes:
+        network.add_arc(-1, node, 0)
+    
 
 if __name__ == "__main__":
 
-    m = 100
+    #m = 100
     ξ = random.Random(0)
     #d = ξ.random()
     #n, m = determine_n_and_m(x, d)
     d = 0
-    n = 10000 #determine_n(m, d)
+    n = 10 #determine_n(m, d)
     #m = 10000
 
     #r = ξ.random()
     r = 0.001
+    z = ξ.randint(1, n)
     lb = ξ.randint(-10000, 0)
     ub = ξ.randint(0, 10000)
     D = partial(random.Random.randint, a=lb, b=ub)
 
     m = nb_arcs_from_density(n, d)
     network, tree_arcs, distances, mapping, source = build_instance(ξ, n=n, m=m, r=r, D=D)
+    change_source_nodes(ξ, network, z)
+    print('complete')
     #draw_graph(network, tree_arcs, distances)

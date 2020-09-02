@@ -10,6 +10,7 @@ def output(ξ, graph, sum_of_distances, target_n_arcs, d, r, s, lb, ub, source, 
     
     Note that the node ordering is indexed from 1 not 0 so our nodes must be increased.
     """
+
     n = graph.number_of_nodes()
     m = graph.number_of_arcs()
     arc_weights = [w for _, _, w in graph.arcs()]
@@ -17,7 +18,7 @@ def output(ξ, graph, sum_of_distances, target_n_arcs, d, r, s, lb, ub, source, 
     m_zero = sum(1 for w in arc_weights if w == 0)
     filename = f"strong-graph-{target_n_arcs}-{s}"  # Other input data required
     if shuffle:
-        nodes = list(range(n))
+        nodes = list(graph.nodes())
         ξ.shuffle(nodes)
         mapping = {u: i for i, u in enumerate(nodes)}
     else:
