@@ -1,0 +1,49 @@
+c Strong graph for shortest paths problem
+c extended DIMACS format
+c filename: strong-graph-10-1
+c 
+c Generator Parameters
+c n=8
+c m=10
+c d=0.13436424411240122
+c r=0.2550690257394217
+c s=1
+c lb=-2390375.5508742444
+c ub=4722452.435761167
+c
+c Features
+c Sum of distances 0
+c Number of arcs 10
+c Density 0.15625
+c Proportion of negative arcs 2
+c Proportion of zero arcs 0
+c Number of positive arcs 8
+c Max depth 4
+c Weight (max) 37.183977141457774
+c Weight (min) -13.274117378687393
+c Weight (mean) 6.772700034231608
+c Weight (variance) 6.772700034231608
+c Abs weight (max) 37.183977141457774
+c Abs weight (min) 1.0
+c Abs weight (mean) 10.823791720991007
+c Abs weight (variance) 130.3474548556246
+c Source nodes 2
+c Source node ratio 0.25
+t strong-graph-10-1
+c
+p sp          9         12
+c
+n          6
+c
+a          6          5          0
+a          3          2 17.208598041272904
+a          6          4          0
+a          4          5 16.58881087541879
+a          1          5 22.54183965594573
+a          2          4 -13.274117378687393
+a          7          3 8.71228787778124
+a          9          8 37.183977141457774
+a          8          1 -11.032432741869005
+a          5          7 1.1412774589286245
+a          4          9        1.0
+a          1          4 1.2021594805306333

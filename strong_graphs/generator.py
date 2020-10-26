@@ -2,6 +2,7 @@ import itertools
 import math
 import random
 from functools import partial
+from strong_graphs.output import output
 from strong_graphs.data_structure import Network
 from strong_graphs.negative import (
     nb_neg_arcs,
@@ -57,8 +58,7 @@ def nb_current_non_pos_tree_loop(network):
 def build_instance(ξ, n, m, r, D):
     """The graph generation algorithm."""
     assert n <= m <= n * (n - 1), f"invalid number of arcs {m=}"
-
-    network = Network(nodes=range(n+1))
+    network = Network(nodes=range(n))
     # Create optimal shortest path tree
     m_neg = nb_neg_arcs(n, m, r)
     m_neg_tree = nb_neg_tree_arcs(ξ, n, m, m_neg)
@@ -117,7 +117,8 @@ def change_source_nodes(ξ, network, z):
 if __name__ == "__main__":
 
     #m = 100
-    ξ = random.Random(0)
+    s = 1
+    ξ = random.Random(s)
     #d = ξ.random()
     #n, m = determine_n_and_m(x, d)
     d = 0
@@ -133,6 +134,8 @@ if __name__ == "__main__":
 
     m = nb_arcs_from_density(n, d)
     network, tree_arcs, distances, mapping, source = build_instance(ξ, n=n, m=m, r=r, D=D)
+    draw_graph(network, tree_arcs, distances)
     change_source_nodes(ξ, network, z)
     print('complete')
-    #draw_graph(network, tree_arcs, distances)
+    output(ξ, network, 0, m, d, r, s, z, lb, ub, -1)
+    

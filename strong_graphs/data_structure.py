@@ -55,6 +55,15 @@ class Network:
     def successors(self, node_id):
         yield from self._successors[node_id]
 
+    def normalise(self): 
+        divisor = min(abs(w) for _, _, w in self.arcs() if w != 0)
+        N = Network()
+        for node in self.nodes():
+            N.add_node(node)
+        for u, v, w in self.arcs():
+            N.add_arc(u, v, w/float(divisor))
+        return N
+
 
 
 def to_networkx(graph):
