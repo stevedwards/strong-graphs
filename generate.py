@@ -11,20 +11,17 @@ from strong_graphs.utils import nb_arcs_from_density
 @click.command()
 @click.argument("m", type=int)
 @click.argument("s", type=int)
+@click.argument("is_non_neg", type=bool)
 @click.argument("is_int", type=bool)
-def generate_from_distribution(m, s, is_int):
+def generate_from_distribution(m, s, is_non_neg, is_int):
     ξ = random.Random(s)
     d = ξ.random()
     n = determine_n(m, d)
     z = ξ.randint(1, n)
-    r = ξ.random()
+    r = 0 if is_non_neg else ξ.random()
     #r = 0.001
-    C_proxy = ξ.randint(0, 10)
-    lb = ξ.uniform(-10**C_proxy, 0)
-    ub = ξ.uniform(0, 10**C_proxy)
-    if is_int:
-        lb = round(lb)
-        ub = round(ub)
+    lb = -10**ξ.randint(0, 10)
+    ub = 10**ξ.randint(0, 10)
     print(n, m)
     D = partial(random.Random.randint if is_int else random.Random.uniform, a=lb, b=ub)
     network, _, distances, _, source = build_instance(
